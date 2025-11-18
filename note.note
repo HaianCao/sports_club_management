@@ -7,7 +7,7 @@ table name = Subjects
         description:str, is_deleted: bool = false)
 
 table name = Timelines
-    (time_id: int primary key, start: time, end: time, is_deleted: bool = false)
+    (time_id: int primary key, start: datetime, end: datetime, is_deleted: bool = false)
 
 table name = Joins
     ((u_id: int, t_id: int, subject_id: int): primary key, participated: int = false, 

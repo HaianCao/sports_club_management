@@ -3,7 +3,7 @@ package com.sportclub;
 import com.sportclub.database.CRUD.*;
 import com.sportclub.database.models.*;
 import com.sportclub.util.HibernateUtil;
-import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.List;
 
 public class Main {
@@ -81,7 +81,9 @@ public class Main {
         Subject swimming = Add.addSubject("Afternoon Swim", "Lane swimming session.");
 
         // Add a timeline
-        Timeline swimTime = Add.addTimeline(Time.valueOf("14:00:00"), Time.valueOf("15:00:00"));
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + 3600000; // 1 hour later
+        Timeline swimTime = Add.addTimeline(new Timestamp(startTime), new Timestamp(endTime));
         System.out.println("Added timeline with ID: " + swimTime.getTimeId());
 
         // A user joins a subject's timeline

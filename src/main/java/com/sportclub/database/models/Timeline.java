@@ -1,7 +1,7 @@
 package com.sportclub.database.models;
 
 import javax.persistence.*;
-import java.sql.Time;
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "Timelines")
@@ -12,11 +12,11 @@ public class Timeline {
     @Column(name = "time_id")
     private int timeId;
 
-    @Column(name = "start_time")
-    private Time start;
+    @Column(name = "start")
+    private Timestamp start;
 
-    @Column(name = "end_time")
-    private Time end;
+    @Column(name = "end")
+    private Timestamp end;
 
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
@@ -34,19 +34,19 @@ public class Timeline {
         this.timeId = timeId;
     }
 
-    public Time getStart() {
+    public Timestamp getStart() {
         return start;
     }
 
-    public void setStart(Time start) {
+    public void setStart(Timestamp start) {
         this.start = start;
     }
 
-    public Time getEnd() {
+    public Timestamp getEnd() {
         return end;
     }
 
-    public void setEnd(Time end) {
+    public void setEnd(Timestamp end) {
         this.end = end;
     }
 

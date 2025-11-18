@@ -1,7 +1,7 @@
 package com.sportclub.database.CRUD;
 
 import com.sportclub.database.models.*;
-import java.sql.Time;
+import java.sql.Timestamp;
 
 public class Add {
 
@@ -27,7 +27,7 @@ public class Add {
         return subject;
     }
 
-    public static Timeline addTimeline(Time start, Time end) {
+    public static Timeline addTimeline(Timestamp start, Timestamp end) {
         Timeline timeline = new Timeline();
         timeline.setStart(start);
         timeline.setEnd(end);
