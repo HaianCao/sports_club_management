@@ -1,14 +1,33 @@
 package com.sportclub.ui;
 
-import com.sportclub.database.CRUD.*;
-import com.sportclub.database.models.*;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.sql.Time;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableModel;
+
+import com.sportclub.database.CRUD.Add;
+import com.sportclub.database.CRUD.Delete;
+import com.sportclub.database.CRUD.Query;
+import com.sportclub.database.CRUD.Update;
+import com.sportclub.database.models.Subject;
+import com.sportclub.database.models.Timeline;
 
 /**
  * Panel for managing weekly schedules with class details and member management

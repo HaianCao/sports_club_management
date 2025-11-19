@@ -1,16 +1,35 @@
 package com.sportclub.ui;
 
-import com.sportclub.database.CRUD.*;
-import com.sportclub.database.models.*;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+
+import com.sportclub.database.CRUD.Add;
+import com.sportclub.database.CRUD.Delete;
+import com.sportclub.database.CRUD.Query;
+import com.sportclub.database.models.Attendance;
+import com.sportclub.database.models.Member;
+import com.sportclub.database.models.Regist;
+import com.sportclub.database.models.Subject;
+import com.sportclub.database.models.Timeline;
 
 /**
  * Panel for class-based attendance management
@@ -252,6 +271,76 @@ public class AttendancePanel extends JPanel {
         }
     }
 
+    /**
+     * Get week label with start and end dates (e.g., "Tuần 1 (01/01 - 07/01/2025)")
+     */
+    private String getWeekLabel(int weekNumber) {
+        Calendar cal = Calendar.getInstance();
+        // Set to first day of the year
+        cal.set(Calendar.DAY_OF_YEAR, 1);
+        
+        // Calculate the start date of the week (Monday of that week)
+        int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
+        int daysToMonday = (dayOfWeek == 1) ? 6 : dayOfWeek - 2;
+        cal.add(Calendar.DAY_OF_MONTH, -daysToMonday);
+        
+        // Move to the requested week
+        cal.add(Calendar.WEEK_OF_YEAR, weekNumber - 1);
+        
+        // Start date is Monday
+        java.util.Date startDate = cal.getTime();
+        SimpleDateFormat weekFormat = new SimpleDateFormat("dd/MM");
+        String startDateStr = weekFormat.format(startDate);
+        
+        // End date is Sunday (6 days later)
+        cal.add(Calendar.DAY_OF_MONTH, 6);
+        java.util.Date endDate = cal.getTime();
+        SimpleDateFormat endFormat = new SimpleDateFormat("dd/MM/yyyy");
+        String endDateStr = endFormat.format(endDate);
+        
+        return "Tuần " + weekNumber + " (" + startDateStr + " - " + endDateStr + ")";
+    }
+
+    /**
+     * Get day label with specific date (e.g., "Thứ 2 (19/11/2025)")
+     */
+    private String getDayLabel(String dayOfWeek) {
+        // Get the next occurrence of this day of week
+        Calendar cal = Calendar.getInstance();
+        
+        // Map day name to Calendar constant
+        int targetDay = mapDayToCalendar(dayOfWeek);
+        
+        // Find the next occurrence of this day
+        int currentDay = cal.get(Calendar.DAY_OF_WEEK);
+        int daysAhead = targetDay - currentDay;
+        if (daysAhead <= 0) {
+            daysAhead += 7;
+        }
+        
+        cal.add(Calendar.DAY_OF_MONTH, daysAhead);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        String dateStr = dateFormat.format(cal.getTime());
+        
+        return dayOfWeek + " (" + dateStr + ")";
+    }
+
+    /**
+     * Map Vietnamese day name to Calendar day constant
+     */
+    private int mapDayToCalendar(String dayName) {
+        switch (dayName) {
+            case "Thứ 2": return Calendar.MONDAY;
+            case "Thứ 3": return Calendar.TUESDAY;
+            case "Thứ 4": return Calendar.WEDNESDAY;
+            case "Thứ 5": return Calendar.THURSDAY;
+            case "Thứ 6": return Calendar.FRIDAY;
+            case "Thứ 7": return Calendar.SATURDAY;
+            case "Chủ nhật": return Calendar.SUNDAY;
+            default: return Calendar.MONDAY;
+        }
+    }
+
     private void loadWeeks() {
         weekCombo.removeAllItems();
         weekCombo.addItem("-- Chọn tuần --");
@@ -279,7 +368,8 @@ public class AttendancePanel extends JPanel {
                     }
                 }
                 for (Integer week : weeks) {
-                    weekCombo.addItem("Tuần " + week);
+                    String weekLabel = getWeekLabel(week);
+                    weekCombo.addItem(weekLabel);
                 }
             }
         } catch (Exception e) {
@@ -315,7 +405,8 @@ public class AttendancePanel extends JPanel {
                     }
                 }
                 for (String day : days) {
-                    dayCombo.addItem(day);
+                    String dayLabel = getDayLabel(day);
+                    dayCombo.addItem(dayLabel);
                 }
             }
         } catch (Exception e) {
@@ -343,10 +434,10 @@ public class AttendancePanel extends JPanel {
             List<Timeline> schedules = Query.findActiveSchedules();
 
             if (schedules != null && !schedules.isEmpty()) {
-                // Sort by time
+                // Filter schedules by subject and day
                 java.util.List<Timeline> filteredSchedules = new java.util.ArrayList<>();
                 for (Timeline timeline : schedules) {
-                    if (timeline.getSubjId() == subjId && daySelected.equals(timeline.getWeekDay())) {
+                    if (timeline.getSubjId() == subjId && isMatchingDay(daySelected, timeline.getWeekDay())) {
                         filteredSchedules.add(timeline);
                     }
                 }
@@ -355,6 +446,7 @@ public class AttendancePanel extends JPanel {
                 filteredSchedules.sort((a, b) -> a.getStartTime().compareTo(b.getStartTime()));
 
                 if (!filteredSchedules.isEmpty()) {
+                    // Add classes without headers - just sorted by time
                     for (Timeline timeline : filteredSchedules) {
                         String item = timeline.getTimelineId() + " - " + timeline.getStartTime() +
                                 " - " + timeline.getEndTime() + " (" + timeline.getPlace() + ")";
@@ -370,6 +462,18 @@ public class AttendancePanel extends JPanel {
             scheduleCombo.addItem("-- Lỗi khi tải dữ liệu --");
             System.out.println("Error loading schedules for day: " + e.getMessage());
         }
+    }
+
+    /**
+     * Check if day selected matches timeline day (extract day name from daySelected which includes date)
+     */
+    private boolean isMatchingDay(String daySelected, String timelineDay) {
+        // daySelected is like "Thứ 2 (19/11/2025)", extract the day name part
+        if (daySelected.contains("(")) {
+            String dayName = daySelected.substring(0, daySelected.indexOf("(")).trim();
+            return dayName.equals(timelineDay);
+        }
+        return daySelected.equals(timelineDay);
     }
 
     private void loadSelectedSchedule() {
