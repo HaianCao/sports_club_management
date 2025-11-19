@@ -71,6 +71,20 @@
                         <argument>-Dfile.encoding=UTF-8</argument>
                     </arguments>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <configuration>
+                            <mainClass>com.sportclub.Main</mainClass>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>gui</id>
+                        <configuration>
+                            <mainClass>com.sportclub.GuiLauncher</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

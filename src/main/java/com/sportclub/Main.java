@@ -3,18 +3,37 @@ package com.sportclub;
 import com.sportclub.database.CRUD.*;
 import com.sportclub.database.models.*;
 import com.sportclub.util.HibernateUtil;
+import com.sportclub.util.TimeUtil;
+import com.sportclub.ui.MainWindow;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.TimeZone;
 
 public class Main {
 
     public static void main(String[] args) {
+        // Set timezone to GMT+7 (Vietnam timezone)
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+
+        // Check if GUI mode is requested
+        if (args.length > 0 && args[0].equals("--gui")) {
+            // Launch GUI
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                new MainWindow().setVisible(true);
+            });
+            return;
+        }
+
+        // Run console tests
         System.out.println("=== Starting Sport Club Management CRUD Tests ===");
-        
+        System.out.println("Current timezone: " + TimeUtil.getCurrentTimeZoneInfo());
+        System.out.println("Current time: " + TimeUtil.formatTimestamp(TimeUtil.getCurrentTimestamp()));
+        System.out.println("Tip: Run with --gui argument to start GUI mode");
+
         try {
             // Initialize root account if it doesn't exist
             Init.initRootAccount();
-            
+
             testUserManagement();
             testSubjectManagement();
             testTimelineAndJoinManagement();
@@ -80,18 +99,21 @@ public class Main {
         User participant = Add.addUser("Jane Smith", "555555555", "janesmith", "pass", "Female", 2);
         Subject swimming = Add.addSubject("Afternoon Swim", "Lane swimming session.");
 
-        // Add a timeline
-        long startTime = System.currentTimeMillis();
-        long endTime = startTime + 3600000; // 1 hour later
-        Timeline swimTime = Add.addTimeline(new Timestamp(startTime), new Timestamp(endTime));
+        // Add a timeline (using current time as base)
+        Timestamp startTime = TimeUtil.getCurrentTimestamp();
+        Timestamp endTime = TimeUtil.addHours(startTime, 1); // 1 hour later
+        Timeline swimTime = Add.addTimeline(startTime, endTime);
         System.out.println("Added timeline with ID: " + swimTime.getTimeId());
+        System.out.println("Start time (GMT+7): " + TimeUtil.formatTimestamp(startTime));
+        System.out.println("End time (GMT+7): " + TimeUtil.formatTimestamp(endTime));
 
         // A user joins a subject's timeline
         Join newJoin = Add.addJoin(participant.getId(), swimTime.getTimeId(), swimming.getId(), "1");
         System.out.println("User " + newJoin.getId().getuId() + " joined subject " + newJoin.getId().getSubjectId());
 
         // Update participation status
-        Update.updateJoinParticipation(participant.getId(), swimTime.getTimeId(), swimming.getId(), 1, "Attended the session.", "1");
+        Update.updateJoinParticipation(participant.getId(), swimTime.getTimeId(), swimming.getId(), 1,
+                "Attended the session.", "1");
         JoinId joinId = new JoinId(participant.getId(), swimTime.getTimeId(), swimming.getId());
         Join updatedJoin = CRUDManager.get(Join.class, joinId);
         System.out.println("User participation status: " + updatedJoin.getParticipated());

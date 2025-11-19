@@ -31,6 +31,17 @@ public class Add {
         Timeline timeline = new Timeline();
         timeline.setStart(start);
         timeline.setEnd(end);
+        timeline.setSubjectId(0); // Default no subject
+        timeline.setDeleted(false);
+        CRUDManager.save(timeline);
+        return timeline;
+    }
+
+    public static Timeline addTimeline(Timestamp start, Timestamp end, int subjectId) {
+        Timeline timeline = new Timeline();
+        timeline.setStart(start);
+        timeline.setEnd(end);
+        timeline.setSubjectId(subjectId);
         timeline.setDeleted(false);
         CRUDManager.save(timeline);
         return timeline;

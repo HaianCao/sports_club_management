@@ -32,14 +32,14 @@ public class Init {
                 if (sessionFactory == null) {
                     try {
                         initDatabase();
-                        
+
                         Configuration configuration = new Configuration();
                         configuration.configure("hibernate.cfg.xml");
-                        
+
                         configuration.setProperty("hibernate.connection.url", IConfig.databaseUrl);
                         configuration.setProperty("hibernate.connection.username", IConfig.username);
                         configuration.setProperty("hibernate.connection.password", IConfig.password);
-                        
+
                         sessionFactory = configuration.buildSessionFactory();
                         System.out.println("SessionFactory has been initialized successfully.");
                     } catch (Exception e) {
@@ -53,9 +53,9 @@ public class Init {
     }
 
     public static void initDatabase() {
-        String serverUrl = "jdbc:mysql://localhost:3306/?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+        String serverUrl = "jdbc:mysql://localhost:3306/?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true";
         String databaseName = "sport_club_db";
-        
+
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
@@ -63,15 +63,15 @@ public class Init {
             e.printStackTrace();
             throw new RuntimeException("MySQL Driver not found", e);
         }
-        
+
         try (Connection conn = DriverManager.getConnection(serverUrl, IConfig.username, IConfig.password);
-             Statement stmt = conn.createStatement()) {
-            
-            String sql = "CREATE DATABASE IF NOT EXISTS " + databaseName + 
-                        " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+                Statement stmt = conn.createStatement()) {
+
+            String sql = "CREATE DATABASE IF NOT EXISTS " + databaseName +
+                    " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
             stmt.executeUpdate(sql);
             System.out.println("Database '" + databaseName + "' has been initialized successfully");
-            
+
         } catch (SQLException e) {
             System.err.println("Error initializing database: " + e.getMessage());
             e.printStackTrace();
@@ -86,7 +86,7 @@ public class Init {
         try {
             // Query to check if root account already exists
             User existingRoot = Query.findUserByAccount(IConfig.acc_root);
-            
+
             if (existingRoot == null) {
                 // Root account does not exist, create it
                 System.out.println("Creating root account...");
@@ -98,7 +98,7 @@ public class Init {
                 rootUser.setGender("Unknown");
                 rootUser.setRole(0); // Role 0 = root
                 rootUser.setDeleted(false);
-                
+
                 CRUDManager.save(rootUser);
                 System.out.println("Root account created successfully with account: " + IConfig.acc_root);
             } else {

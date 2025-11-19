@@ -18,6 +18,9 @@ public class Timeline {
     @Column(name = "end")
     private Timestamp end;
 
+    @Column(name = "subject_id")
+    private int subjectId;
+
     @Column(name = "is_deleted")
     private boolean isDeleted = false;
 
@@ -50,6 +53,14 @@ public class Timeline {
         this.end = end;
     }
 
+    public int getSubjectId() {
+        return subjectId;
+    }
+
+    public void setSubjectId(int subjectId) {
+        this.subjectId = subjectId;
+    }
+
     public boolean isDeleted() {
         return isDeleted;
     }
@@ -58,4 +69,3 @@ public class Timeline {
         this.isDeleted = deleted;
     }
 }
-
