@@ -8,7 +8,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
@@ -18,6 +17,9 @@ import java.text.SimpleDateFormat;
  */
 public class AttendancePanel extends JPanel {
 
+    private JComboBox<String> subjectCombo;
+    private JComboBox<String> weekCombo;
+    private JComboBox<String> dayCombo;
     private JComboBox<String> scheduleCombo;
     private JTextField dateField;
     private JTable attendanceTable;
@@ -42,8 +44,36 @@ public class AttendancePanel extends JPanel {
         });
     }
 
+    /**
+     * Public method to refresh subjects and schedules (called when subject/schedule is added/updated/deleted)
+     */
+    public void refreshAttendance() {
+        loadSchedules();
+    }
+
     private void initializeComponents() {
-        // Controls
+        // Subject combo - để lọc lịch học theo môn
+        subjectCombo = new JComboBox<>();
+        subjectCombo.addActionListener(e -> {
+            loadWeeks();
+            tableModel.setRowCount(0);
+        });
+
+        // Week combo
+        weekCombo = new JComboBox<>();
+        weekCombo.addActionListener(e -> {
+            loadDaysForWeek();
+            tableModel.setRowCount(0);
+        });
+
+        // Day combo
+        dayCombo = new JComboBox<>();
+        dayCombo.addActionListener(e -> {
+            loadSchedulesForDay();
+            tableModel.setRowCount(0);
+        });
+
+        // Schedule combo
         scheduleCombo = new JComboBox<>();
         scheduleCombo.addActionListener(e -> {
             loadSelectedSchedule();
@@ -112,18 +142,33 @@ public class AttendancePanel extends JPanel {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Top panel - Chọn lớp học và ngày
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.setBorder(BorderFactory.createTitledBorder("Chọn lớp học để điểm danh"));
+        // Top panel - Chọn môn tập, tuần, ngày, lịch học
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        topPanel.setBorder(BorderFactory.createTitledBorder("Chọn môn tập, tuần, ngày để điểm danh"));
 
+        topPanel.add(new JLabel("Môn tập:"));
+        topPanel.add(subjectCombo);
+        topPanel.add(Box.createHorizontalStrut(5));
+        topPanel.add(new JLabel("Tuần:"));
+        topPanel.add(weekCombo);
+        topPanel.add(Box.createHorizontalStrut(5));
+        topPanel.add(new JLabel("Ngày:"));
+        topPanel.add(dayCombo);
+        topPanel.add(Box.createHorizontalStrut(5));
         topPanel.add(new JLabel("Lớp học:"));
         topPanel.add(scheduleCombo);
         topPanel.add(refreshBtn);
-        topPanel.add(Box.createHorizontalStrut(20));
-        topPanel.add(new JLabel("Ngày (yyyy-mm-dd):"));
-        topPanel.add(dateField);
-        topPanel.add(Box.createHorizontalStrut(20));
-        topPanel.add(loadBtn);
+        
+        // Second row for date and load button
+        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        datePanel.add(new JLabel("Ngày (yyyy-mm-dd):"));
+        datePanel.add(dateField);
+        datePanel.add(loadBtn);
+
+        // Combine top panels
+        JPanel filterPanel = new JPanel(new BorderLayout());
+        filterPanel.add(topPanel, BorderLayout.NORTH);
+        filterPanel.add(datePanel, BorderLayout.SOUTH);
 
         // Center panel - Bảng điểm danh
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -138,42 +183,193 @@ public class AttendancePanel extends JPanel {
         bottomPanel.add(saveBtn);
 
         // Main layout
-        add(topPanel, BorderLayout.NORTH);
+        add(filterPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private void loadSchedules() {
+        // Load all subjects first
+        subjectCombo.removeAllItems();
+        subjectCombo.addItem("-- Chọn môn tập --");
+        
+        try {
+            List<Subject> subjects = Query.findActiveSubjects();
+            if (subjects != null && !subjects.isEmpty()) {
+                for (Subject subject : subjects) {
+                    subjectCombo.addItem(subject.getSubjId() + " - " + subject.getName());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading subjects: " + e.getMessage());
+        }
+
+        // Reset schedules and table
+        loadSchedulesForSubject();
+    }
+
+    private void loadSchedulesForSubject() {
         scheduleCombo.removeAllItems();
         scheduleCombo.addItem("-- Chọn lớp học --");
+        tableModel.setRowCount(0);
+        selectedTimelineId = -1;
+
+        String selected = (String) subjectCombo.getSelectedItem();
+        if (selected == null || selected.startsWith("--")) {
+            scheduleCombo.addItem("-- Vui lòng chọn môn tập trước --");
+            return;
+        }
 
         try {
+            // Extract subject ID
+            int subjId = Integer.parseInt(selected.split(" - ")[0]);
+
+            // Get all schedules
             List<Timeline> schedules = Query.findActiveSchedules();
             if (schedules != null && !schedules.isEmpty()) {
                 int count = 0;
                 for (Timeline timeline : schedules) {
-                    Subject subject = Query.findById(Subject.class, timeline.getSubjId());
-                    String subjectName = subject != null ? subject.getName() : "Unknown";
-                    String item = timeline.getTimelineId() + " - " + subjectName +
-                            " (" + timeline.getWeekDay() + " " + timeline.getStartTime() +
-                            " - " + timeline.getEndTime() + " tại " + timeline.getPlace() + ")";
-                    scheduleCombo.addItem(item);
-                    count++;
+                    // Filter by selected subject
+                    if (timeline.getSubjId() == subjId) {
+                        Subject subject = Query.findById(Subject.class, timeline.getSubjId());
+                        String subjectName = subject != null ? subject.getName() : "Unknown";
+                        String item = timeline.getTimelineId() + " - " + subjectName +
+                                " (" + timeline.getWeekDay() + " " + timeline.getStartTime() +
+                                " - " + timeline.getEndTime() + " tại " + timeline.getPlace() + ")";
+                        scheduleCombo.addItem(item);
+                        count++;
+                    }
                 }
-                System.out.println("Loaded " + count + " schedules successfully");
+                if (count == 0) {
+                    scheduleCombo.addItem("-- Môn này không có lịch học nào --");
+                }
             } else {
                 scheduleCombo.addItem("-- Không có lịch học nào --");
-                System.out.println("No schedules found in database");
             }
         } catch (Exception e) {
             scheduleCombo.addItem("-- Lỗi khi tải dữ liệu --");
-            System.out.println("Error loading schedules: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Error loading schedules for subject: " + e.getMessage());
+        }
+    }
+
+    private void loadWeeks() {
+        weekCombo.removeAllItems();
+        weekCombo.addItem("-- Chọn tuần --");
+        dayCombo.removeAllItems();
+        dayCombo.addItem("-- Chọn ngày --");
+        scheduleCombo.removeAllItems();
+        scheduleCombo.addItem("-- Chọn lớp học --");
+        tableModel.setRowCount(0);
+        selectedTimelineId = -1;
+
+        String selected = (String) subjectCombo.getSelectedItem();
+        if (selected == null || selected.startsWith("--")) {
+            return;
         }
 
-        // Reset selection
-        selectedTimelineId = -1;
+        try {
+            int subjId = Integer.parseInt(selected.split(" - ")[0]);
+            List<Timeline> schedules = Query.findActiveSchedules();
+            
+            if (schedules != null && !schedules.isEmpty()) {
+                java.util.Set<Integer> weeks = new java.util.TreeSet<>();
+                for (Timeline timeline : schedules) {
+                    if (timeline.getSubjId() == subjId) {
+                        weeks.add(1); // Mặc định tuần 1 - có thể mở rộng sau
+                    }
+                }
+                for (Integer week : weeks) {
+                    weekCombo.addItem("Tuần " + week);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading weeks: " + e.getMessage());
+        }
+    }
+
+    private void loadDaysForWeek() {
+        dayCombo.removeAllItems();
+        dayCombo.addItem("-- Chọn ngày --");
+        scheduleCombo.removeAllItems();
+        scheduleCombo.addItem("-- Chọn lớp học --");
         tableModel.setRowCount(0);
+        selectedTimelineId = -1;
+
+        String subjectSelected = (String) subjectCombo.getSelectedItem();
+        String weekSelected = (String) weekCombo.getSelectedItem();
+
+        if (subjectSelected == null || subjectSelected.startsWith("--") ||
+            weekSelected == null || weekSelected.startsWith("--")) {
+            return;
+        }
+
+        try {
+            int subjId = Integer.parseInt(subjectSelected.split(" - ")[0]);
+            List<Timeline> schedules = Query.findActiveSchedules();
+
+            if (schedules != null && !schedules.isEmpty()) {
+                java.util.Set<String> days = new java.util.LinkedHashSet<>();
+                for (Timeline timeline : schedules) {
+                    if (timeline.getSubjId() == subjId) {
+                        days.add(timeline.getWeekDay());
+                    }
+                }
+                for (String day : days) {
+                    dayCombo.addItem(day);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error loading days: " + e.getMessage());
+        }
+    }
+
+    private void loadSchedulesForDay() {
+        scheduleCombo.removeAllItems();
+        scheduleCombo.addItem("-- Chọn lớp học --");
+        tableModel.setRowCount(0);
+        selectedTimelineId = -1;
+
+        String subjectSelected = (String) subjectCombo.getSelectedItem();
+        String daySelected = (String) dayCombo.getSelectedItem();
+
+        if (subjectSelected == null || subjectSelected.startsWith("--") ||
+            daySelected == null || daySelected.startsWith("--")) {
+            scheduleCombo.addItem("-- Vui lòng chọn đầy đủ thông tin --");
+            return;
+        }
+
+        try {
+            int subjId = Integer.parseInt(subjectSelected.split(" - ")[0]);
+            List<Timeline> schedules = Query.findActiveSchedules();
+
+            if (schedules != null && !schedules.isEmpty()) {
+                // Sort by time
+                java.util.List<Timeline> filteredSchedules = new java.util.ArrayList<>();
+                for (Timeline timeline : schedules) {
+                    if (timeline.getSubjId() == subjId && daySelected.equals(timeline.getWeekDay())) {
+                        filteredSchedules.add(timeline);
+                    }
+                }
+                
+                // Sort by start time
+                filteredSchedules.sort((a, b) -> a.getStartTime().compareTo(b.getStartTime()));
+
+                if (!filteredSchedules.isEmpty()) {
+                    for (Timeline timeline : filteredSchedules) {
+                        String item = timeline.getTimelineId() + " - " + timeline.getStartTime() +
+                                " - " + timeline.getEndTime() + " (" + timeline.getPlace() + ")";
+                        scheduleCombo.addItem(item);
+                    }
+                } else {
+                    scheduleCombo.addItem("-- Không có lớp học vào " + daySelected + " --");
+                }
+            } else {
+                scheduleCombo.addItem("-- Không có lịch học nào --");
+            }
+        } catch (Exception e) {
+            scheduleCombo.addItem("-- Lỗi khi tải dữ liệu --");
+            System.out.println("Error loading schedules for day: " + e.getMessage());
+        }
     }
 
     private void loadSelectedSchedule() {

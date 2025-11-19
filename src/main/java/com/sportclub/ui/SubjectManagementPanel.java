@@ -21,8 +21,19 @@ public class SubjectManagementPanel extends JPanel {
     private JTextArea descriptionArea;
     private JButton addBtn, updateBtn, deleteBtn, refreshBtn, viewMembersBtn;
     private int selectedSubjectId = -1;
+    private ScheduleManagementPanel schedulePanelRef; // optional ref to refresh schedule subjects
+    private AttendancePanel attendancePanelRef; // optional ref to refresh attendance
 
     public SubjectManagementPanel() {
+        this(null, null);
+    }
+
+    /**
+     * Construct with optional references to schedule and attendance panels
+     */
+    public SubjectManagementPanel(ScheduleManagementPanel schedulePanel, AttendancePanel attendancePanel) {
+        this.schedulePanelRef = schedulePanel;
+        this.attendancePanelRef = attendancePanel;
         initializeComponents();
         setupLayout();
         loadSubjects();
@@ -238,6 +249,8 @@ public class SubjectManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Thêm môn tập thành công!", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
                 loadSubjects();
+                if (schedulePanelRef != null) schedulePanelRef.loadSubjects();
+                if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
                 clearForm();
             }
         } catch (Exception ex) {
@@ -276,6 +289,8 @@ public class SubjectManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
                 loadSubjects();
+                if (schedulePanelRef != null) schedulePanelRef.loadSubjects();
+                if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
                 clearForm();
             }
         } catch (Exception ex) {
@@ -299,6 +314,8 @@ public class SubjectManagementPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xóa môn tập thành công!", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
                 loadSubjects();
+                if (schedulePanelRef != null) schedulePanelRef.loadSubjects();
+                if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
                 clearForm();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi",

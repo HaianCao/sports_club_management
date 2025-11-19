@@ -21,8 +21,17 @@ public class ScheduleManagementPanel extends JPanel {
     private JTextField startTimeField, endTimeField, placeField;
     private JButton addBtn, updateBtn, deleteBtn, refreshBtn;
     private int selectedTimelineId = -1;
+    private AttendancePanel attendancePanelRef; // optional ref to refresh attendance
 
     public ScheduleManagementPanel() {
+        this(null);
+    }
+
+    /**
+     * Construct with optional reference to attendance panel
+     */
+    public ScheduleManagementPanel(AttendancePanel attendancePanel) {
+        this.attendancePanelRef = attendancePanel;
         initializeComponents();
         setupLayout();
         loadSchedules();
@@ -181,6 +190,7 @@ public class ScheduleManagementPanel extends JPanel {
                     JOptionPane.INFORMATION_MESSAGE);
             clearForm();
             loadSchedules();
+            if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -244,6 +254,7 @@ public class ScheduleManagementPanel extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 clearForm();
                 loadSchedules();
+                if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
             }
 
         } catch (Exception ex) {
@@ -270,6 +281,7 @@ public class ScheduleManagementPanel extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 clearForm();
                 loadSchedules();
+                if (attendancePanelRef != null) attendancePanelRef.refreshAttendance();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi xóa: " + ex.getMessage(), "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
@@ -343,7 +355,7 @@ public class ScheduleManagementPanel extends JPanel {
         }
     }
 
-    private void loadSubjects() {
+    public void loadSubjects() {
         subjectCombo.removeAllItems();
         subjectCombo.addItem("-- Chọn môn tập --");
 

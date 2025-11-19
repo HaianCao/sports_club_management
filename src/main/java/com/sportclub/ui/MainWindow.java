@@ -33,9 +33,12 @@ public class MainWindow extends JFrame {
 
         // Initialize management panels
         memberPanel = new MemberManagementPanel();
-        subjectPanel = new SubjectManagementPanel();
-        schedulePanel = new ScheduleManagementPanel();
+        // Create attendance panel first so others can reference it to refresh
         attendancePanel = new AttendancePanel();
+        // Create schedule panel with attendance reference
+        schedulePanel = new ScheduleManagementPanel(attendancePanel);
+        // Create subject panel with schedule and attendance references
+        subjectPanel = new SubjectManagementPanel(schedulePanel, attendancePanel);
         reportPanel = new ReportPanel();
 
         // Add panels to CardLayout
