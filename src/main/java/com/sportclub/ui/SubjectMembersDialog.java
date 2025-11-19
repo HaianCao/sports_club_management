@@ -7,14 +7,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.ArrayList;
 import java.sql.Date;
 
-/**
- * Dialog for managing members in a subject
- */
 public class SubjectMembersDialog extends JDialog {
 
     private Subject subject;
@@ -41,12 +37,10 @@ public class SubjectMembersDialog extends JDialog {
     }
 
     private void initializeComponents() {
-        // Subject info label
         subjectInfoLabel = new JLabel();
         subjectInfoLabel.setFont(new Font("Arial", Font.BOLD, 14));
         subjectInfoLabel.setForeground(new Color(51, 122, 183));
 
-        // Members table
         String[] columns = { "ID", "Tên thành viên", "Giới tính", "Số điện thoại", "Email", "Ngày đăng ký" };
         membersTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -57,32 +51,33 @@ public class SubjectMembersDialog extends JDialog {
         membersTable = new JTable(membersTableModel);
         membersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Available members combo
         availableMembersCombo = new JComboBox<>();
         availableMembersCombo.setPreferredSize(new Dimension(300, 30));
 
-        // Buttons
         addMemberBtn = new JButton("Thêm vào môn");
+        addMemberBtn.setPreferredSize(new Dimension(120, 35));
         addMemberBtn.setBackground(new Color(40, 167, 69));
         addMemberBtn.setForeground(Color.WHITE);
         addMemberBtn.setFocusPainted(false);
 
         removeMemberBtn = new JButton("Xóa khỏi môn");
+        removeMemberBtn.setPreferredSize(new Dimension(120, 35));
         removeMemberBtn.setBackground(new Color(220, 53, 69));
         removeMemberBtn.setForeground(Color.WHITE);
         removeMemberBtn.setFocusPainted(false);
 
         refreshBtn = new JButton("Làm mới");
+        refreshBtn.setPreferredSize(new Dimension(100, 35));
         refreshBtn.setBackground(new Color(23, 162, 184));
         refreshBtn.setForeground(Color.WHITE);
         refreshBtn.setFocusPainted(false);
 
         closeBtn = new JButton("Đóng");
+        closeBtn.setPreferredSize(new Dimension(80, 35));
         closeBtn.setBackground(new Color(108, 117, 125));
         closeBtn.setForeground(Color.WHITE);
         closeBtn.setFocusPainted(false);
 
-        // Action listeners
         addMemberBtn.addActionListener(this::addMemberToSubject);
         removeMemberBtn.addActionListener(this::removeMemberFromSubject);
         refreshBtn.addActionListener(e -> {
@@ -95,30 +90,25 @@ public class SubjectMembersDialog extends JDialog {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Info panel
         JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         infoPanel.add(subjectInfoLabel);
 
-        // Members table panel
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBorder(BorderFactory.createTitledBorder("Danh sách thành viên trong môn"));
         tablePanel.add(new JScrollPane(membersTable), BorderLayout.CENTER);
 
-        // Add member panel
         JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addPanel.setBorder(BorderFactory.createTitledBorder("Thêm thành viên"));
         addPanel.add(new JLabel("Chọn thành viên:"));
         addPanel.add(availableMembersCombo);
         addPanel.add(addMemberBtn);
 
-        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(removeMemberBtn);
         buttonPanel.add(refreshBtn);
         buttonPanel.add(closeBtn);
 
-        // Main layout
         add(infoPanel, BorderLayout.NORTH);
         add(tablePanel, BorderLayout.CENTER);
 
@@ -173,7 +163,6 @@ public class SubjectMembersDialog extends JDialog {
             List<Member> allMembers = Query.findActiveMembers();
             if (allMembers != null) {
                 for (Member member : allMembers) {
-                    // Kiểm tra xem thành viên đã tham gia môn này chưa
                     boolean alreadyRegistered = subjectMembers.stream()
                             .anyMatch(sm -> sm.getMemId() == member.getMemId());
 
@@ -202,14 +191,12 @@ public class SubjectMembersDialog extends JDialog {
         try {
             Member selectedMember = availableMembers.get(selectedIndex);
 
-            // Thêm registration mới sử dụng method đúng signature
             Add.addRegistration(selectedMember.getMemId(), subject.getSubjId(), new Date(System.currentTimeMillis()));
 
             JOptionPane.showMessageDialog(this,
                     "Đã thêm " + selectedMember.getName() + " vào môn " + subject.getName() + "!",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
-            // Refresh data
             loadSubjectMembers();
             loadAvailableMembers();
 
@@ -236,14 +223,12 @@ public class SubjectMembersDialog extends JDialog {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                // Xóa registration
                 Delete.deleteRegistration(memberId, subject.getSubjId());
 
                 JOptionPane.showMessageDialog(this,
                         "Đã xóa " + memberName + " khỏi môn " + subject.getName() + "!",
                         "Thành công", JOptionPane.INFORMATION_MESSAGE);
 
-                // Refresh data
                 loadSubjectMembers();
                 loadAvailableMembers();
 

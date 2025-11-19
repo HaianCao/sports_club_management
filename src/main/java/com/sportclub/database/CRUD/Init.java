@@ -80,9 +80,6 @@ public class Init {
         }
     }
 
-    /**
-     * Initialize sample data for the sports club management system
-     */
     public static void initSampleData() {
         try {
             // Create sample members

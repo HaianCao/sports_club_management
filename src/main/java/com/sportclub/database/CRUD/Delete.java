@@ -5,11 +5,6 @@ import java.util.List;
 
 public class Delete {
 
-    /**
-     * Hard deletes a member from the database.
-     * 
-     * @param memId The ID of the member to delete.
-     */
     public static void deleteMember(int memId) {
         Member member = Query.findById(Member.class, memId);
         if (member != null) {
@@ -20,11 +15,6 @@ public class Delete {
         }
     }
 
-    /**
-     * Hard deletes a subject from the database.
-     * 
-     * @param subjId The ID of the subject to delete.
-     */
     public static void deleteSubject(int subjId) {
         Subject subject = Query.findById(Subject.class, subjId);
         if (subject != null) {
@@ -35,11 +25,6 @@ public class Delete {
         }
     }
 
-    /**
-     * Hard deletes a timeline from the database.
-     * 
-     * @param timelineId The ID of the timeline to delete.
-     */
     public static void deleteTimeline(int timelineId) {
         Timeline timeline = Query.findById(Timeline.class, timelineId);
         if (timeline != null) {
@@ -50,11 +35,6 @@ public class Delete {
         }
     }
 
-    /**
-     * Hard deletes attendance record from the database.
-     * 
-     * @param attendId The ID of the attendance record to delete.
-     */
     public static void deleteAttendance(int attendId) {
         Attendance attendance = Query.findById(Attendance.class, attendId);
         if (attendance != null) {
@@ -65,11 +45,6 @@ public class Delete {
         }
     }
 
-    /**
-     * Hard deletes a registration from the database.
-     * 
-     * @param regist The registration to delete.
-     */
     public static void deleteRegistration(Regist regist) {
         if (regist != null) {
             CRUDManager.delete(regist);
@@ -80,12 +55,6 @@ public class Delete {
         }
     }
 
-    /**
-     * Hard deletes a registration from the database by member ID and subject ID.
-     * 
-     * @param memId  The member ID.
-     * @param subjId The subject ID.
-     */
     public static void deleteRegistration(int memId, int subjId) {
         try {
             // Find registration by IDs
@@ -103,22 +72,5 @@ public class Delete {
             System.out.println("Error deleting registration: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    // Backwards compatibility aliases for GUI
-    public static void softDeleteMember(int memId) {
-        deleteMember(memId);
-    }
-
-    public static void softDeleteSubject(int subjId) {
-        deleteSubject(subjId);
-    }
-
-    public static void softDeleteTimeline(int timelineId) {
-        deleteTimeline(timelineId);
-    }
-
-    public static void softDeleteAttendance(int attendId) {
-        deleteAttendance(attendId);
     }
 }

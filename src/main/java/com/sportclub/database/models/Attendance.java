@@ -27,7 +27,6 @@ public class Attendance {
     @Column(name = "notes")
     private String notes;
 
-    // Constructors
     public Attendance() {
     }
 
@@ -45,7 +44,6 @@ public class Attendance {
         this.notes = notes;
     }
 
-    // Getters and Setters
     public int getAttendId() {
         return attendId;
     }
@@ -94,7 +92,6 @@ public class Attendance {
         this.notes = notes;
     }
 
-    // Convenience methods for GUI compatibility
     public int getAttendanceId() {
         return attendId;
     }

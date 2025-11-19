@@ -11,18 +11,22 @@ public final class HibernateUtil {
     private static final SessionFactory sessionFactory = buildSessionFactory();
 
     private static SessionFactory buildSessionFactory() {
-        // Ensure the database exists before Hibernate tries to connect
-        Init.initDatabase();
-
-        final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-                .configure() 
-                .build();
         try {
-            System.out.println("✓ Initializing Hibernate SessionFactory...");
-            return new MetadataSources(registry).buildMetadata().buildSessionFactory();
+            Init.initDatabase();
+
+            final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+                    .configure()
+                    .build();
+            try {
+                System.out.println("✓ Initializing Hibernate SessionFactory...");
+                return new MetadataSources(registry).buildMetadata().buildSessionFactory();
+            } catch (Exception e) {
+                System.err.println("✗ Error initializing SessionFactory: " + e.getMessage());
+                StandardServiceRegistryBuilder.destroy(registry);
+                throw new ExceptionInInitializerError(e);
+            }
         } catch (Exception e) {
-            System.err.println("✗ Error initializing SessionFactory: " + e.getMessage());
-            StandardServiceRegistryBuilder.destroy(registry);
+            System.err.println("✗ Error initializing database: " + e.getMessage());
             throw new ExceptionInInitializerError(e);
         }
     }

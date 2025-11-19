@@ -7,13 +7,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.sql.Date;
 
-/**
- * Dialog for viewing class details and managing members
- */
 public class ClassDetailsDialog extends JDialog {
 
     private Timeline timeline;
@@ -40,12 +36,10 @@ public class ClassDetailsDialog extends JDialog {
     }
 
     private void initializeComponents() {
-        // Class info label
         classInfoLabel = new JLabel();
         classInfoLabel.setFont(new Font("Arial", Font.BOLD, 14));
         classInfoLabel.setForeground(new Color(51, 122, 183));
 
-        // Members table
         String[] columns = { "ID", "Tên thành viên", "Giới tính", "Số điện thoại", "Email", "Ngày đăng ký" };
         membersTableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -56,10 +50,8 @@ public class ClassDetailsDialog extends JDialog {
         membersTable = new JTable(membersTableModel);
         membersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Available members combo
         availableMembersCombo = new JComboBox<>();
 
-        // Buttons
         addMemberBtn = new JButton("Thêm thành viên");
         addMemberBtn.addActionListener(this::addMemberToClass);
 
@@ -76,7 +68,6 @@ public class ClassDetailsDialog extends JDialog {
         closeBtn = new JButton("Đóng");
         closeBtn.addActionListener(e -> dispose());
 
-        // Table selection listener
         membersTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 removeMemberBtn.setEnabled(membersTable.getSelectedRow() >= 0);
@@ -87,31 +78,26 @@ public class ClassDetailsDialog extends JDialog {
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Top panel - Class info
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createTitledBorder("Thông tin lớp học"));
         topPanel.add(classInfoLabel, BorderLayout.CENTER);
 
-        // Center panel - Members table
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setBorder(BorderFactory.createTitledBorder("Danh sách thành viên"));
         JScrollPane tableScrollPane = new JScrollPane(membersTable);
         centerPanel.add(tableScrollPane, BorderLayout.CENTER);
 
-        // Add member panel
         JPanel addMemberPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addMemberPanel.setBorder(BorderFactory.createTitledBorder("Thêm thành viên mới"));
         addMemberPanel.add(new JLabel("Chọn thành viên:"));
         addMemberPanel.add(availableMembersCombo);
         addMemberPanel.add(addMemberBtn);
 
-        // Bottom panel - Buttons
         JPanel bottomPanel = new JPanel(new FlowLayout());
         bottomPanel.add(removeMemberBtn);
         bottomPanel.add(refreshBtn);
         bottomPanel.add(closeBtn);
 
-        // Main layout
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
 
@@ -175,16 +161,13 @@ public class ClassDetailsDialog extends JDialog {
         if (subject == null)
             return;
 
-        // Get all members
         List<Member> allMembers = Query.findActiveMembers();
         if (allMembers == null)
             return;
 
-        // Get already registered members for this subject
         List<Regist> registrations = Query.findRegistrationsBySubject(subject.getSubjId());
 
         for (Member member : allMembers) {
-            // Check if member is already registered
             boolean isRegistered = false;
             if (registrations != null) {
                 for (Regist regist : registrations) {
@@ -195,7 +178,6 @@ public class ClassDetailsDialog extends JDialog {
                 }
             }
 
-            // Add to combo if not registered
             if (!isRegistered) {
                 availableMembersCombo.addItem(member.getMemId() + " - " + member.getName());
             }
@@ -218,7 +200,6 @@ public class ClassDetailsDialog extends JDialog {
             int memId = Integer.parseInt(selectedMember.split(" - ")[0]);
             Date currentDate = new Date(System.currentTimeMillis());
 
-            // Check if already registered
             List<Regist> existingRegistrations = Query.findRegistrationsByMember(memId);
             if (existingRegistrations != null) {
                 for (Regist regist : existingRegistrations) {
@@ -235,7 +216,6 @@ public class ClassDetailsDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Thêm thành viên vào lớp thành công!", "Thành công",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Refresh data
             loadClassMembers();
             loadAvailableMembers();
 
@@ -267,12 +247,10 @@ public class ClassDetailsDialog extends JDialog {
 
         if (result == JOptionPane.YES_OPTION) {
             try {
-                // Find and delete the registration
                 List<Regist> registrations = Query.findRegistrationsByMember(memId);
                 if (registrations != null) {
                     for (Regist regist : registrations) {
                         if (regist.getSubjId() == subject.getSubjId()) {
-                            // Hard delete the registration
                             Delete.deleteRegistration(regist);
                             break;
                         }
@@ -282,7 +260,6 @@ public class ClassDetailsDialog extends JDialog {
                 JOptionPane.showMessageDialog(this, "Đã xóa thành viên khỏi lớp học!", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // Refresh data
                 loadClassMembers();
                 loadAvailableMembers();
 
@@ -296,6 +273,6 @@ public class ClassDetailsDialog extends JDialog {
     private String formatTime(java.sql.Time time) {
         if (time == null)
             return "";
-        return time.toString().substring(0, 5); // HH:mm
+        return time.toString().substring(0, 5);
     }
 }

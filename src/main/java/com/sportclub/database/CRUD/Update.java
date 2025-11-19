@@ -6,7 +6,6 @@ import java.sql.Time;
 
 public class Update {
 
-    // Member updates
     public static void updateMember(int memId, String newName, String newPhone, String newEmail) {
         Member member = Query.findById(Member.class, memId);
         if (member != null) {
@@ -20,7 +19,6 @@ public class Update {
         }
     }
 
-    // Subject updates
     public static void updateSubjectInfo(int subjId, String newName, String newDesc, String newCoach) {
         Subject subject = Query.findById(Subject.class, subjId);
         if (subject != null) {
@@ -34,7 +32,6 @@ public class Update {
         }
     }
 
-    // Timeline updates
     public static void updateTimeline(int timelineId, String newWeekDay, Time newStartTime, Time newEndTime,
             String newPlace) {
         Timeline timeline = Query.findById(Timeline.class, timelineId);
@@ -50,7 +47,6 @@ public class Update {
         }
     }
 
-    // Attendance updates
     public static void updateAttendance(int attendId, Date attendDate, String status, String notes) {
         Attendance attendance = Query.findById(Attendance.class, attendId);
         if (attendance != null) {

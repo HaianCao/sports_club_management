@@ -8,15 +8,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * A central manager for handling Hibernate sessions and transactions to avoid boilerplate code.
- */
 public class CRUDManager {
 
-    /**
-     * Executes a transactional operation (e.g., save, update, delete).
-     * @param action The action to perform within the transaction.
-     */
     private static void executeTransaction(Consumer<Session> action) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -32,11 +25,6 @@ public class CRUDManager {
         }
     }
 
-    /**
-     * Executes a query operation that returns a result.
-     * @param func The function to execute that returns a result.
-     * @return The result of the query.
-     */
     private static <T> T executeQuery(Function<Session, T> func) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return func.apply(session);

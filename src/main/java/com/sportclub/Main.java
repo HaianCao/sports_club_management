@@ -5,33 +5,27 @@ import com.sportclub.database.models.*;
 import com.sportclub.util.HibernateUtil;
 import com.sportclub.util.TimeUtil;
 import com.sportclub.ui.MainWindow;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.TimeZone;
 
 public class Main {
 
     public static void main(String[] args) {
-        // Set timezone to GMT+7 (Vietnam timezone)
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 
-        // Check if GUI mode is requested
         if (args.length > 0 && args[0].equals("--gui")) {
-            // Launch GUI
             javax.swing.SwingUtilities.invokeLater(() -> {
                 new MainWindow().setVisible(true);
             });
             return;
         }
 
-        // Run console tests
         System.out.println("=== Starting Sport Club Management CRUD Tests ===");
         System.out.println("Current timezone: " + TimeUtil.getCurrentTimeZoneInfo());
         System.out.println("Current time: " + TimeUtil.formatTimestamp(TimeUtil.getCurrentTimestamp()));
         System.out.println("Tip: Run with --gui argument to start GUI mode");
 
         try {
-            // Initialize sample data for the new database structure
             Init.initSampleData();
 
             testMemberManagement();

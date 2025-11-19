@@ -16,9 +16,8 @@ public class Timeline {
     private int subjId;
 
     @Column(name = "week_day")
-    private String weekDay; // Monday, Tuesday, etc.
+    private String weekDay; 
 
-    // Time format: HH:mm:ss (e.g., 18:00:00 for 6:00 PM)
     @Column(name = "start_time")
     private Time startTime;
 
@@ -28,7 +27,6 @@ public class Timeline {
     @Column(name = "place")
     private String place;
 
-    // Constructors
     public Timeline() {
     }
 
@@ -40,7 +38,6 @@ public class Timeline {
         this.place = place;
     }
 
-    // Getters and Setters
     public int getTimelineId() {
         return timelineId;
     }

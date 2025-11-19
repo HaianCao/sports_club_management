@@ -27,7 +27,6 @@ public class Member {
     @Column(name = "email")
     private String email;
 
-    // Constructors
     public Member() {
     }
 
@@ -39,7 +38,6 @@ public class Member {
         this.email = email;
     }
 
-    // Getters and Setters
     public int getMemId() {
         return memId;
     }

@@ -1,25 +1,22 @@
 package com.sportclub.ui;
 
 import com.sportclub.database.CRUD.*;
-import com.sportclub.database.models.Subject;
+import com.sportclub.database.models.*;
+import com.sportclub.util.CSVExporter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * Panel for managing sports subjects
- */
 public class SubjectManagementPanel extends JPanel {
 
     private JTable subjectTable;
     private DefaultTableModel tableModel;
     private JTextField nameField, coachField;
     private JTextArea descriptionArea;
-    private JButton addBtn, updateBtn, deleteBtn, refreshBtn, viewMembersBtn;
+    private JButton addBtn, updateBtn, deleteBtn, refreshBtn, viewMembersBtn, exportCSVBtn;
     private int selectedSubjectId = -1;
 
     public SubjectManagementPanel() {
@@ -29,7 +26,6 @@ public class SubjectManagementPanel extends JPanel {
     }
 
     private void initializeComponents() {
-        // Table setup
         String[] columns = { "Mã môn", "Tên môn", "Mô tả", "Huấn luyện viên", "Số thành viên" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -45,16 +41,14 @@ public class SubjectManagementPanel extends JPanel {
             }
         });
 
-        // Form fields
         nameField = new JTextField(20);
         coachField = new JTextField(20);
         descriptionArea = new JTextArea(5, 20);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
 
-        // Buttons
         addBtn = new JButton("Thêm môn tập");
-        addBtn.setPreferredSize(new Dimension(100, 35));
+        addBtn.setPreferredSize(new Dimension(130, 35));
         addBtn.setMargin(new Insets(5, 10, 5, 10));
 
         updateBtn = new JButton("Cập nhật");
@@ -71,29 +65,31 @@ public class SubjectManagementPanel extends JPanel {
         refreshBtn.setPreferredSize(new Dimension(100, 35));
         refreshBtn.setMargin(new Insets(5, 10, 5, 10));
 
-        viewMembersBtn = new JButton("Quản lý thành viên");
+        viewMembersBtn = new JButton("Xem thành viên");
         viewMembersBtn.setPreferredSize(new Dimension(140, 35));
         viewMembersBtn.setMargin(new Insets(5, 10, 5, 10));
         viewMembersBtn.setEnabled(false);
 
-        // Action listeners
+        exportCSVBtn = new JButton("Xuất CSV");
+        exportCSVBtn.setPreferredSize(new Dimension(100, 35));
+        exportCSVBtn.setMargin(new Insets(5, 10, 5, 10));
+
         addBtn.addActionListener(this::addSubject);
         updateBtn.addActionListener(this::updateSubject);
         deleteBtn.addActionListener(this::deleteSubject);
         refreshBtn.addActionListener(e -> loadSubjects());
         viewMembersBtn.addActionListener(e -> viewSubjectMembers());
+        exportCSVBtn.addActionListener(e -> exportToCSV());
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin môn tập"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // Name field
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
@@ -103,7 +99,6 @@ public class SubjectManagementPanel extends JPanel {
         gbc.weightx = 1.0;
         formPanel.add(nameField, gbc);
 
-        // Coach field
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
@@ -114,7 +109,6 @@ public class SubjectManagementPanel extends JPanel {
         gbc.weightx = 1.0;
         formPanel.add(coachField, gbc);
 
-        // Description area
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.NONE;
@@ -126,15 +120,14 @@ public class SubjectManagementPanel extends JPanel {
         gbc.weighty = 1.0;
         formPanel.add(new JScrollPane(descriptionArea), gbc);
 
-        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(addBtn);
         buttonPanel.add(updateBtn);
         buttonPanel.add(deleteBtn);
         buttonPanel.add(viewMembersBtn);
         buttonPanel.add(refreshBtn);
+        buttonPanel.add(exportCSVBtn);
 
-        // Main layout
         add(formPanel, BorderLayout.NORTH);
         add(new JScrollPane(subjectTable), BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
@@ -145,7 +138,6 @@ public class SubjectManagementPanel extends JPanel {
         List<Subject> subjects = Query.findActiveSubjects();
         if (subjects != null) {
             for (Subject subject : subjects) {
-                // Đếm số thành viên trong môn này
                 List<com.sportclub.database.models.Regist> registrations = Query
                         .findRegistrationsBySubject(subject.getSubjId());
                 int memberCount = registrations != null ? registrations.size() : 0;
@@ -161,7 +153,6 @@ public class SubjectManagementPanel extends JPanel {
             }
         }
 
-        // Setup button renderer and editor for "Xem chi tiết" column
         if (subjectTable.getColumnCount() > 5) {
             subjectTable.removeColumn(subjectTable.getColumnModel().getColumn(5));
         }
@@ -177,11 +168,9 @@ public class SubjectManagementPanel extends JPanel {
         try {
             Subject subject = Query.findSubjectById(selectedSubjectId);
             if (subject != null) {
-                // Tạo dialog quản lý thành viên cho môn tập
                 SubjectMembersDialog dialog = new SubjectMembersDialog((JFrame) SwingUtilities.getWindowAncestor(this),
                         subject);
                 dialog.setVisible(true);
-                // Refresh sau khi đóng dialog
                 loadSubjects();
             }
         } catch (Exception e) {
@@ -295,7 +284,7 @@ public class SubjectManagementPanel extends JPanel {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                Delete.softDeleteSubject(selectedSubjectId);
+                Delete.deleteSubject(selectedSubjectId);
                 JOptionPane.showMessageDialog(this, "Xóa môn tập thành công!", "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
                 loadSubjects();
@@ -305,5 +294,14 @@ public class SubjectManagementPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void exportToCSV() {
+        if (subjectTable.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        CSVExporter.exportTableToCSV(subjectTable, "danh_sach_mon_hoc");
     }
 }

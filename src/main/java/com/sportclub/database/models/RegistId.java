@@ -13,7 +13,6 @@ public class RegistId implements Serializable {
     @Column(name = "subj_id")
     private int subjId;
 
-    // Constructors
     public RegistId() {
     }
 
@@ -22,7 +21,6 @@ public class RegistId implements Serializable {
         this.subjId = subjId;
     }
 
-    // Getters and Setters
     public int getMemId() {
         return memId;
     }

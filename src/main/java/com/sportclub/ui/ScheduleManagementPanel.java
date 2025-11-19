@@ -2,6 +2,7 @@ package com.sportclub.ui;
 
 import com.sportclub.database.CRUD.*;
 import com.sportclub.database.models.*;
+import com.sportclub.util.CSVExporter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,16 +11,13 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.sql.Time;
 
-/**
- * Panel for managing weekly schedules with class details and member management
- */
 public class ScheduleManagementPanel extends JPanel {
 
     private JTable scheduleTable;
     private DefaultTableModel tableModel;
     private JComboBox<String> subjectCombo, weekDayCombo;
     private JTextField startTimeField, endTimeField, placeField;
-    private JButton addBtn, updateBtn, deleteBtn, refreshBtn;
+    private JButton addBtn, updateBtn, deleteBtn, refreshBtn, exportCSVBtn;
     private int selectedTimelineId = -1;
 
     public ScheduleManagementPanel() {
@@ -30,7 +28,6 @@ public class ScheduleManagementPanel extends JPanel {
     }
 
     private void initializeComponents() {
-        // Table setup
         String[] columns = { "ID", "Môn tập", "Thứ", "Giờ bắt đầu", "Giờ kết thúc", "Địa điểm" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -46,7 +43,6 @@ public class ScheduleManagementPanel extends JPanel {
             }
         });
 
-        // Form fields
         subjectCombo = new JComboBox<>();
         weekDayCombo = new JComboBox<>(new String[] {
                 "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"
@@ -56,7 +52,6 @@ public class ScheduleManagementPanel extends JPanel {
         endTimeField = new JTextField(8);
         placeField = new JTextField(20);
 
-        // Buttons
         addBtn = new JButton("Thêm lịch");
         addBtn.setPreferredSize(new Dimension(100, 35));
 
@@ -71,7 +66,9 @@ public class ScheduleManagementPanel extends JPanel {
         refreshBtn = new JButton("Làm mới");
         refreshBtn.setPreferredSize(new Dimension(100, 35));
 
-        // Action listeners
+        exportCSVBtn = new JButton("Xuất CSV");
+        exportCSVBtn.setPreferredSize(new Dimension(100, 35));
+
         addBtn.addActionListener(this::addSchedule);
         updateBtn.addActionListener(this::updateSchedule);
         deleteBtn.addActionListener(this::deleteSchedule);
@@ -79,18 +76,17 @@ public class ScheduleManagementPanel extends JPanel {
             loadSchedules();
             loadSubjects();
         });
+        exportCSVBtn.addActionListener(e -> exportToCSV());
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin lịch học"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
 
-        // Row 1
         gbc.gridx = 0;
         gbc.gridy = 0;
         formPanel.add(new JLabel("Môn tập:"), gbc);
@@ -101,7 +97,6 @@ public class ScheduleManagementPanel extends JPanel {
         gbc.gridx = 3;
         formPanel.add(weekDayCombo, gbc);
 
-        // Row 2
         gbc.gridx = 0;
         gbc.gridy = 1;
         formPanel.add(new JLabel("Giờ bắt đầu:"), gbc);
@@ -112,7 +107,6 @@ public class ScheduleManagementPanel extends JPanel {
         gbc.gridx = 3;
         formPanel.add(endTimeField, gbc);
 
-        // Row 3
         gbc.gridx = 0;
         gbc.gridy = 2;
         formPanel.add(new JLabel("Địa điểm:"), gbc);
@@ -120,18 +114,16 @@ public class ScheduleManagementPanel extends JPanel {
         gbc.gridwidth = 3;
         formPanel.add(placeField, gbc);
 
-        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(addBtn);
         buttonPanel.add(updateBtn);
         buttonPanel.add(deleteBtn);
         buttonPanel.add(refreshBtn);
+        buttonPanel.add(exportCSVBtn);
 
-        // Table panel
         JScrollPane tableScrollPane = new JScrollPane(scheduleTable);
         tableScrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách lịch học"));
 
-        // Layout
         add(formPanel, BorderLayout.NORTH);
         add(tableScrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
@@ -158,7 +150,6 @@ public class ScheduleManagementPanel extends JPanel {
                 return;
             }
 
-            // Parse time with format validation
             Time startTime = parseTimeInput(startTimeText);
             Time endTime = parseTimeInput(endTimeText);
 
@@ -284,7 +275,6 @@ public class ScheduleManagementPanel extends JPanel {
 
             Timeline timeline = Query.findById(Timeline.class, selectedTimelineId);
             if (timeline != null) {
-                // Set form fields
                 setSubjectComboSelection(timeline.getSubjId());
                 weekDayCombo.setSelectedItem(timeline.getWeekDay());
                 startTimeField.setText(formatTime(timeline.getStartTime()));
@@ -358,18 +348,26 @@ public class ScheduleManagementPanel extends JPanel {
     private String formatTime(Time time) {
         if (time == null)
             return "";
-        return time.toString().substring(0, 5); // HH:mm
+        return time.toString().substring(0, 5);
     }
 
     private Time parseTimeInput(String timeText) {
         try {
-            // Accept both HH:mm and HH:mm:ss formats
             if (timeText.matches("\\d{1,2}:\\d{2}")) {
-                timeText += ":00"; // Add seconds
+                timeText += ":00";
             }
             return Time.valueOf(timeText);
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    private void exportToCSV() {
+        if (scheduleTable.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        CSVExporter.exportTableToCSV(scheduleTable, "danh_sach_lich_hoc");
     }
 }

@@ -6,7 +6,6 @@ import java.sql.Time;
 
 public class Add {
 
-    // Member operations
     public static Member addMember(String name, Date birth, String gender, String phone, String email) {
         Member member = new Member();
         member.setName(name);
@@ -18,7 +17,6 @@ public class Add {
         return member;
     }
 
-    // Subject operations
     public static Subject addSubject(String name, String desc, String coach) {
         Subject subject = new Subject();
         subject.setName(name);
@@ -28,7 +26,6 @@ public class Add {
         return subject;
     }
 
-    // Timeline/Schedule operations
     public static Timeline addTimeline(int subjId, String weekDay, Time startTime, Time endTime, String place) {
         Timeline timeline = new Timeline();
         timeline.setSubjId(subjId);
@@ -40,7 +37,6 @@ public class Add {
         return timeline;
     }
 
-    // Registration operations
     public static Regist addRegistration(int memId, int subjId, Date registDay) {
         RegistId registId = new RegistId(memId, subjId);
         Regist regist = new Regist();
@@ -50,7 +46,6 @@ public class Add {
         return regist;
     }
 
-    // Attendance operations
     public static Attendance addAttendance(int memId, int timelineId, Date attendDate) {
         Attendance attendance = new Attendance();
         attendance.setMemId(memId);

@@ -20,7 +20,6 @@ public class Subject {
     @Column(name = "coach")
     private String coach;
 
-    // Constructors
     public Subject() {
     }
 
@@ -30,7 +29,6 @@ public class Subject {
         this.coach = coach;
     }
 
-    // Getters and Setters
     public int getSubjId() {
         return subjId;
     }

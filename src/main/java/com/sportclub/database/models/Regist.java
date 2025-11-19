@@ -13,7 +13,6 @@ public class Regist {
     @Column(name = "regist_day")
     private Date registDay;
 
-    // Constructors
     public Regist() {
     }
 
@@ -22,7 +21,6 @@ public class Regist {
         this.registDay = registDay;
     }
 
-    // Getters and Setters
     public RegistId getId() {
         return id;
     }
@@ -39,7 +37,6 @@ public class Regist {
         this.registDay = registDay;
     }
 
-    // Convenience methods
     public int getMemId() {
         return id != null ? id.getMemId() : 0;
     }

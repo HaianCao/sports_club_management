@@ -2,23 +2,16 @@ package com.sportclub.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-/**
- * Main application window for Sports Club Management
- */
 public class MainWindow extends JFrame {
 
     private JPanel contentPanel;
     private CardLayout cardLayout;
 
-    // Panel components
     private MemberManagementPanel memberPanel;
     private SubjectManagementPanel subjectPanel;
     private ScheduleManagementPanel schedulePanel;
     private AttendancePanel attendancePanel;
-    private ReportPanel reportPanel;
 
     public MainWindow() {
         initializeComponents();
@@ -27,36 +20,28 @@ public class MainWindow extends JFrame {
     }
 
     private void initializeComponents() {
-        // Initialize CardLayout for switching panels
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        // Initialize management panels
         memberPanel = new MemberManagementPanel();
         subjectPanel = new SubjectManagementPanel();
         schedulePanel = new ScheduleManagementPanel();
         attendancePanel = new AttendancePanel();
-        reportPanel = new ReportPanel();
 
-        // Add panels to CardLayout
         contentPanel.add(createHomePanel(), "HOME");
         contentPanel.add(memberPanel, "MEMBERS");
         contentPanel.add(subjectPanel, "SUBJECTS");
         contentPanel.add(schedulePanel, "SCHEDULE");
         contentPanel.add(attendancePanel, "ATTENDANCE");
-        contentPanel.add(reportPanel, "REPORTS");
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
 
-        // Create and add menu bar
         add(createMenuBar(), BorderLayout.NORTH);
 
-        // Add content panel to center
         add(contentPanel, BorderLayout.CENTER);
 
-        // Add status bar
         add(createStatusBar(), BorderLayout.SOUTH);
     }
 
@@ -64,41 +49,29 @@ public class MainWindow extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         menuBar.setBackground(new Color(51, 122, 183));
 
-        // Home button
         JButton homeBtn = createMenuButton("Trang Chủ", "HOME");
         menuBar.add(homeBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
-        // Members button
         JButton membersBtn = createMenuButton("Thành Viên", "MEMBERS");
         menuBar.add(membersBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
-        // Subjects button
         JButton subjectsBtn = createMenuButton("Môn Tập", "SUBJECTS");
         menuBar.add(subjectsBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
-        // Schedule button
         JButton scheduleBtn = createMenuButton("Lịch Tập", "SCHEDULE");
         menuBar.add(scheduleBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
-        // Attendance button
         JButton attendanceBtn = createMenuButton("Điểm Danh", "ATTENDANCE");
         menuBar.add(attendanceBtn);
 
-        menuBar.add(Box.createHorizontalStrut(10));
-
-        // Reports button
-        JButton reportsBtn = createMenuButton("In File", "REPORTS");
-        menuBar.add(reportsBtn);
-
-        // Add glue to push everything to the left
         menuBar.add(Box.createHorizontalGlue());
 
         return menuBar;
@@ -113,7 +86,6 @@ public class MainWindow extends JFrame {
         button.setFont(new Font("Arial", Font.BOLD, 12));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Hover effect
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(new Color(40, 96, 144));
@@ -133,22 +105,18 @@ public class MainWindow extends JFrame {
         JPanel homePanel = new JPanel(new BorderLayout());
         homePanel.setBackground(Color.WHITE);
 
-        // Title
         JLabel titleLabel = new JLabel("HỆ THỐNG QUẢN LÝ CÂU LẠC BỘ THỂ THAO", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(new Color(51, 122, 183));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(50, 20, 30, 20));
 
-        // Welcome message - sử dụng layout tùy chỉnh để căn giữa
         JPanel welcomePanel = new JPanel(new BorderLayout());
         welcomePanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 50, 50));
         welcomePanel.setBackground(Color.WHITE);
 
-        // Panel chứa 4 nút chính (2x2)
         JPanel mainButtonsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
         mainButtonsPanel.setBackground(Color.WHITE);
 
-        // Quick access buttons - 4 nút chính
         mainButtonsPanel
                 .add(createQuickAccessButton("Quản lý Thành viên", "Xem và quản lý thông tin thành viên", "MEMBERS"));
         mainButtonsPanel.add(createQuickAccessButton("Quản lý Môn tập", "Thêm, sửa, xóa các môn thể thao", "SUBJECTS"));
@@ -156,18 +124,7 @@ public class MainWindow extends JFrame {
                 .add(createQuickAccessButton("Quản lý Lịch tập", "Tạo và quản lý lịch trình tập luyện", "SCHEDULE"));
         mainButtonsPanel.add(createQuickAccessButton("Điểm danh", "Ghi nhận sự tham gia của thành viên", "ATTENDANCE"));
 
-        // Panel để căn giữa nút In file
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        centerPanel.setBackground(Color.WHITE);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-
-        // Nút In file đặt riêng ở giữa với kích thước lớn hơn
-        JPanel reportButtonPanel = createQuickAccessButton("In file", "Xuất báo cáo và in tài liệu", "REPORTS");
-        reportButtonPanel.setPreferredSize(new Dimension(300, 80));
-        centerPanel.add(reportButtonPanel);
-
         welcomePanel.add(mainButtonsPanel, BorderLayout.CENTER);
-        welcomePanel.add(centerPanel, BorderLayout.SOUTH);
 
         homePanel.add(titleLabel, BorderLayout.NORTH);
         homePanel.add(welcomePanel, BorderLayout.CENTER);
@@ -194,7 +151,6 @@ public class MainWindow extends JFrame {
         buttonPanel.add(titleLabel, BorderLayout.NORTH);
         buttonPanel.add(descLabel, BorderLayout.CENTER);
 
-        // Click handler
         buttonPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(contentPanel, panelName);
@@ -232,11 +188,9 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(800, 600));
 
-        // Set application icon
         try {
             setIconImage(Toolkit.getDefaultToolkit().getImage("icon.png"));
         } catch (Exception e) {
-            // Icon file not found, use default
         }
     }
 

@@ -7,17 +7,14 @@ import java.util.List;
 
 public class Query {
 
-    // Generic find by ID
     public static <T> T findById(Class<T> type, int id) {
         return CRUDManager.get(type, id);
     }
 
-    // Generic find all
     public static <T> List<T> findAll(Class<T> type) {
         return CRUDManager.getAll(type);
     }
 
-    // Member queries
     public static List<Member> findActiveMembers() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "FROM Member";
@@ -99,7 +96,6 @@ public class Query {
         }
     }
 
-    // Timeline/Schedule queries
     public static List<Timeline> findActiveSchedules() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "FROM Timeline ORDER BY weekDay, startTime";
@@ -134,7 +130,6 @@ public class Query {
         }
     }
 
-    // Registration queries
     public static List<Regist> findActiveRegistrations() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "FROM Regist";
@@ -169,7 +164,6 @@ public class Query {
         }
     }
 
-    // Attendance queries
     public static List<Attendance> findActiveAttendance() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             String hql = "FROM Attendance";
