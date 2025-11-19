@@ -1,7 +1,7 @@
 package com.sportclub.ui;
 
 import com.sportclub.database.CRUD.*;
-import com.sportclub.database.models.User;
+import com.sportclub.database.models.Member;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -9,6 +9,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.text.SimpleDateFormat;
+import java.sql.Date;
 
 /**
  * Panel for managing club members
@@ -17,8 +19,8 @@ public class MemberManagementPanel extends JPanel {
 
     private JTable memberTable;
     private DefaultTableModel tableModel;
-    private JTextField nameField, phoneField, accountField, passwordField;
-    private JComboBox<String> genderCombo, roleCombo;
+    private JTextField nameField, phoneField, emailField, birthField;
+    private JComboBox<String> genderCombo;
     private JButton addBtn, updateBtn, deleteBtn, refreshBtn;
     private int selectedMemberId = -1;
 
@@ -30,7 +32,7 @@ public class MemberManagementPanel extends JPanel {
 
     private void initializeComponents() {
         // Table setup
-        String[] columns = { "ID", "Tên", "Số điện thoại", "Tài khoản", "Giới tính", "Vai trò", "Trạng thái" };
+        String[] columns = { "Mã TV", "Tên", "Ngày sinh", "Giới tính", "Sđt", "Email" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -48,290 +50,218 @@ public class MemberManagementPanel extends JPanel {
         // Form fields
         nameField = new JTextField(20);
         phoneField = new JTextField(20);
-        accountField = new JTextField(20);
-        passwordField = new JPasswordField(20);
-        genderCombo = new JComboBox<>(new String[] { "Male", "Female", "Other" });
-        roleCombo = new JComboBox<>(new String[] { "User", "Manager", "Admin" });
+        emailField = new JTextField(20);
+        birthField = new JTextField(10); // Format: YYYY-MM-DD
+
+        // Gender combo
+        genderCombo = new JComboBox<>(new String[] { "Nam", "Nữ", "Khác" });
 
         // Buttons
-        addBtn = new JButton("Thêm mới");
+        addBtn = new JButton("Thêm thành viên");
+        addBtn.setPreferredSize(new Dimension(100, 35));
+        addBtn.setMargin(new Insets(5, 10, 5, 10));
+
         updateBtn = new JButton("Cập nhật");
+        updateBtn.setPreferredSize(new Dimension(100, 35));
+        updateBtn.setMargin(new Insets(5, 10, 5, 10));
+        updateBtn.setEnabled(false);
+
         deleteBtn = new JButton("Xóa");
+        deleteBtn.setPreferredSize(new Dimension(100, 35));
+        deleteBtn.setMargin(new Insets(5, 10, 5, 10));
+        deleteBtn.setEnabled(false);
+
         refreshBtn = new JButton("Làm mới");
+        refreshBtn.setPreferredSize(new Dimension(100, 35));
+        refreshBtn.setMargin(new Insets(5, 10, 5, 10));
 
-        // Button styling
-        styleButton(addBtn, new Color(92, 184, 92));
-        styleButton(updateBtn, new Color(240, 173, 78));
-        styleButton(deleteBtn, new Color(217, 83, 79));
-        styleButton(refreshBtn, new Color(91, 192, 222));
-
-        // Button actions
+        // Action listeners
         addBtn.addActionListener(this::addMember);
         updateBtn.addActionListener(this::updateMember);
         deleteBtn.addActionListener(this::deleteMember);
-        refreshBtn.addActionListener(e -> {
-            clearForm();
-            loadMembers();
-        });
+        refreshBtn.addActionListener(e -> loadMembers());
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
 
-        // Title
-        JLabel titleLabel = new JLabel("QUẢN LÝ THÀNH VIÊN", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        add(titleLabel, BorderLayout.NORTH);
-
-        // Main content
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(createTablePanel());
-        splitPane.setRightComponent(createFormPanel());
-        splitPane.setDividerLocation(600);
-
-        add(splitPane, BorderLayout.CENTER);
-    }
-
-    private JPanel createTablePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Danh sách thành viên"));
-
-        JScrollPane scrollPane = new JScrollPane(memberTable);
-        scrollPane.setPreferredSize(new Dimension(600, 400));
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(refreshBtn, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Thông tin thành viên"));
-        panel.setBackground(Color.WHITE);
-
+        // Form panel
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin thành viên"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
 
-        // Name
+        // Row 1
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(new JLabel("Họ tên:"), gbc);
+        formPanel.add(new JLabel("Tên:"), gbc);
         gbc.gridx = 1;
-        panel.add(nameField, gbc);
+        formPanel.add(nameField, gbc);
+        gbc.gridx = 2;
+        formPanel.add(new JLabel("Ngày sinh (YYYY-MM-DD):"), gbc);
+        gbc.gridx = 3;
+        formPanel.add(birthField, gbc);
 
-        // Phone
+        // Row 2
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panel.add(new JLabel("Số điện thoại:"), gbc);
+        formPanel.add(new JLabel("Giới tính:"), gbc);
         gbc.gridx = 1;
-        panel.add(phoneField, gbc);
+        formPanel.add(genderCombo, gbc);
+        gbc.gridx = 2;
+        formPanel.add(new JLabel("Số điện thoại:"), gbc);
+        gbc.gridx = 3;
+        formPanel.add(phoneField, gbc);
 
-        // Account
+        // Row 3
         gbc.gridx = 0;
         gbc.gridy = 2;
-        panel.add(new JLabel("Tài khoản:"), gbc);
+        formPanel.add(new JLabel("Email:"), gbc);
         gbc.gridx = 1;
-        panel.add(accountField, gbc);
+        formPanel.add(emailField, gbc);
 
-        // Password
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Mật khẩu:"), gbc);
-        gbc.gridx = 1;
-        panel.add(passwordField, gbc);
-
-        // Gender
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Giới tính:"), gbc);
-        gbc.gridx = 1;
-        panel.add(genderCombo, gbc);
-
-        // Role
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Vai trò:"), gbc);
-        gbc.gridx = 1;
-        panel.add(roleCombo, gbc);
-
-        // Buttons
+        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(addBtn);
         buttonPanel.add(updateBtn);
         buttonPanel.add(deleteBtn);
+        buttonPanel.add(refreshBtn);
 
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(buttonPanel, gbc);
-
-        return panel;
-    }
-
-    private void styleButton(JButton button, Color color) {
-        button.setBackground(color);
-        button.setForeground(Color.WHITE);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setMargin(new java.awt.Insets(5, 10, 5, 10));
+        // Main layout
+        add(formPanel, BorderLayout.NORTH);
+        add(new JScrollPane(memberTable), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void loadMembers() {
         tableModel.setRowCount(0);
-        try {
-            List<User> users = Query.findAll(User.class);
-            for (User user : users) {
+        List<Member> members = Query.findActiveMembers();
+        if (members != null) {
+            for (Member member : members) {
                 Object[] row = {
-                        user.getId(),
-                        user.getName(),
-                        user.getPhone(),
-                        user.getAccount(),
-                        user.getGender(),
-                        getRoleString(user.getRole()),
-                        user.isDeleted() ? "Đã xóa" : "Hoạt động"
+                        member.getMemId(),
+                        member.getName(),
+                        member.getBirth(),
+                        member.getGender(),
+                        member.getPhone(),
+                        member.getEmail()
                 };
                 tableModel.addRow(row);
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu: " + e.getMessage());
         }
     }
 
     private void loadSelectedMember() {
         int selectedRow = memberTable.getSelectedRow();
-        if (selectedRow != -1) {
+        if (selectedRow >= 0) {
             selectedMemberId = (Integer) tableModel.getValueAt(selectedRow, 0);
             nameField.setText((String) tableModel.getValueAt(selectedRow, 1));
-            phoneField.setText((String) tableModel.getValueAt(selectedRow, 2));
-            accountField.setText((String) tableModel.getValueAt(selectedRow, 3));
-            passwordField.setText(""); // Don't show password
-            genderCombo.setSelectedItem(tableModel.getValueAt(selectedRow, 4));
-            String roleStr = (String) tableModel.getValueAt(selectedRow, 5);
-            roleCombo.setSelectedItem(roleStr);
-        }
-    }
+            birthField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+            genderCombo.setSelectedItem(tableModel.getValueAt(selectedRow, 3));
+            phoneField.setText((String) tableModel.getValueAt(selectedRow, 4));
+            emailField.setText((String) tableModel.getValueAt(selectedRow, 5));
 
-    private void addMember(ActionEvent e) {
-        try {
-            if (validateForm()) {
-                User user = Add.addUser(
-                        nameField.getText(),
-                        phoneField.getText(),
-                        accountField.getText(),
-                        passwordField.getText(),
-                        (String) genderCombo.getSelectedItem(),
-                        getRoleValue((String) roleCombo.getSelectedItem()));
-                JOptionPane.showMessageDialog(this, "Thêm thành viên thành công!");
-                clearForm();
-                loadMembers();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi thêm thành viên: " + ex.getMessage());
+            updateBtn.setEnabled(true);
+            deleteBtn.setEnabled(true);
+        } else {
+            clearForm();
         }
-    }
-
-    private void updateMember(ActionEvent e) {
-        try {
-            if (selectedMemberId != -1 && validateForm()) {
-                Update.updateUser(selectedMemberId, nameField.getText(), phoneField.getText());
-                JOptionPane.showMessageDialog(this, "Cập nhật thành viên thành công!");
-                clearForm();
-                loadMembers();
-            } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn thành viên để cập nhật!");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage());
-        }
-    }
-
-    private void deleteMember(ActionEvent e) {
-        try {
-            if (selectedMemberId != -1) {
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        "Bạn có chắc muốn xóa thành viên này?",
-                        "Xác nhận xóa",
-                        JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    Delete.softDeleteUser(selectedMemberId);
-                    JOptionPane.showMessageDialog(this, "Xóa thành viên thành công!");
-                    clearForm();
-                    loadMembers();
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn thành viên để xóa!");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi xóa: " + ex.getMessage());
-        }
-    }
-
-    private boolean validateForm() {
-        if (nameField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập họ tên!");
-            return false;
-        }
-        if (phoneField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập số điện thoại!");
-            return false;
-        }
-        if (accountField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tài khoản!");
-            return false;
-        }
-        if (passwordField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập mật khẩu!");
-            return false;
-        }
-        return true;
     }
 
     private void clearForm() {
         selectedMemberId = -1;
         nameField.setText("");
+        birthField.setText("");
         phoneField.setText("");
-        accountField.setText("");
-        passwordField.setText("");
+        emailField.setText("");
         genderCombo.setSelectedIndex(0);
-        roleCombo.setSelectedIndex(0);
-        memberTable.clearSelection();
+        updateBtn.setEnabled(false);
+        deleteBtn.setEnabled(false);
     }
 
-    private String getRoleString(int role) {
-        switch (role) {
-            case 0:
-                return "Root";
-            case 1:
-                return "Admin";
-            case 2:
-                return "Manager";
-            case 3:
-                return "User";
-            default:
-                return "User";
+    private void addMember(ActionEvent e) {
+        try {
+            String name = nameField.getText().trim();
+            String birthStr = birthField.getText().trim();
+            String gender = (String) genderCombo.getSelectedItem();
+            String phone = phoneField.getText().trim();
+            String email = emailField.getText().trim();
+
+            if (name.isEmpty() || birthStr.isEmpty() || phone.isEmpty() || email.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Date birth = Date.valueOf(birthStr); // Format: YYYY-MM-DD
+            Member member = Add.addMember(name, birth, gender, phone, email);
+
+            if (member != null) {
+                JOptionPane.showMessageDialog(this, "Thêm thành viên thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadMembers();
+                clearForm();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private int getRoleValue(String roleStr) {
-        switch (roleStr) {
-            case "Root":
-                return 0;
-            case "Admin":
-                return 1;
-            case "Manager":
-                return 2;
-            case "User":
-                return 3;
-            default:
-                return 3;
+    private void updateMember(ActionEvent e) {
+        if (selectedMemberId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn thành viên để cập nhật!", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            String name = nameField.getText().trim();
+            String phone = phoneField.getText().trim();
+            String email = emailField.getText().trim();
+
+            if (name.isEmpty() || phone.isEmpty() || email.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn cập nhật thông tin thành viên này?",
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                Update.updateMember(selectedMemberId, name, phone, email);
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadMembers();
+                clearForm();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteMember(ActionEvent e) {
+        if (selectedMemberId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn thành viên để xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn xóa thành viên này?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Delete.softDeleteMember(selectedMemberId);
+                JOptionPane.showMessageDialog(this, "Xóa thành viên thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadMembers();
+                clearForm();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }

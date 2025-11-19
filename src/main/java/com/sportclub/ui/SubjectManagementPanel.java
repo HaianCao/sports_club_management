@@ -17,9 +17,9 @@ public class SubjectManagementPanel extends JPanel {
 
     private JTable subjectTable;
     private DefaultTableModel tableModel;
-    private JTextField nameField;
+    private JTextField nameField, coachField;
     private JTextArea descriptionArea;
-    private JButton addBtn, updateBtn, deleteBtn, refreshBtn;
+    private JButton addBtn, updateBtn, deleteBtn, refreshBtn, viewMembersBtn;
     private int selectedSubjectId = -1;
 
     public SubjectManagementPanel() {
@@ -30,7 +30,7 @@ public class SubjectManagementPanel extends JPanel {
 
     private void initializeComponents() {
         // Table setup
-        String[] columns = { "ID", "Tên môn tập", "Mô tả", "Trạng thái" };
+        String[] columns = { "Mã môn", "Tên môn", "Mô tả", "Huấn luyện viên", "Số thành viên" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -47,217 +47,263 @@ public class SubjectManagementPanel extends JPanel {
 
         // Form fields
         nameField = new JTextField(20);
+        coachField = new JTextField(20);
         descriptionArea = new JTextArea(5, 20);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
 
         // Buttons
-        addBtn = new JButton("Thêm mới");
+        addBtn = new JButton("Thêm môn tập");
+        addBtn.setPreferredSize(new Dimension(100, 35));
+        addBtn.setMargin(new Insets(5, 10, 5, 10));
+
         updateBtn = new JButton("Cập nhật");
+        updateBtn.setPreferredSize(new Dimension(100, 35));
+        updateBtn.setMargin(new Insets(5, 10, 5, 10));
+        updateBtn.setEnabled(false);
+
         deleteBtn = new JButton("Xóa");
+        deleteBtn.setPreferredSize(new Dimension(100, 35));
+        deleteBtn.setMargin(new Insets(5, 10, 5, 10));
+        deleteBtn.setEnabled(false);
+
         refreshBtn = new JButton("Làm mới");
+        refreshBtn.setPreferredSize(new Dimension(100, 35));
+        refreshBtn.setMargin(new Insets(5, 10, 5, 10));
 
-        // Button styling
-        styleButton(addBtn, new Color(92, 184, 92));
-        styleButton(updateBtn, new Color(240, 173, 78));
-        styleButton(deleteBtn, new Color(217, 83, 79));
-        styleButton(refreshBtn, new Color(91, 192, 222));
+        viewMembersBtn = new JButton("Quản lý thành viên");
+        viewMembersBtn.setPreferredSize(new Dimension(140, 35));
+        viewMembersBtn.setMargin(new Insets(5, 10, 5, 10));
+        viewMembersBtn.setEnabled(false);
 
-        // Button actions
+        // Action listeners
         addBtn.addActionListener(this::addSubject);
         updateBtn.addActionListener(this::updateSubject);
         deleteBtn.addActionListener(this::deleteSubject);
-        refreshBtn.addActionListener(e -> {
-            clearForm();
-            loadSubjects();
-        });
+        refreshBtn.addActionListener(e -> loadSubjects());
+        viewMembersBtn.addActionListener(e -> viewSubjectMembers());
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
 
-        // Title
-        JLabel titleLabel = new JLabel("QUẢN LÝ MÔN TẬP", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        add(titleLabel, BorderLayout.NORTH);
-
-        // Main content
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(createTablePanel());
-        splitPane.setRightComponent(createFormPanel());
-        splitPane.setDividerLocation(500);
-
-        add(splitPane, BorderLayout.CENTER);
-    }
-
-    private JPanel createTablePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Danh sách môn tập"));
-
-        JScrollPane scrollPane = new JScrollPane(subjectTable);
-        scrollPane.setPreferredSize(new Dimension(500, 400));
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(refreshBtn, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Thông tin môn tập"));
-        panel.setBackground(Color.WHITE);
-
+        // Form panel
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(BorderFactory.createTitledBorder("Thông tin môn tập"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
 
-        // Name
+        // Name field
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(new JLabel("Tên môn tập:"), gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        formPanel.add(new JLabel("Tên môn tập:"), gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(nameField, gbc);
+        gbc.weightx = 1.0;
+        formPanel.add(nameField, gbc);
 
-        // Description
+        // Coach field
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        panel.add(new JLabel("Mô tả:"), gbc);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("Huấn luyện viên:"), gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        formPanel.add(coachField, gbc);
+
+        // Description area
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        formPanel.add(new JLabel("Mô tả:"), gbc);
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        panel.add(new JScrollPane(descriptionArea), gbc);
+        formPanel.add(new JScrollPane(descriptionArea), gbc);
 
-        // Buttons
+        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(addBtn);
         buttonPanel.add(updateBtn);
         buttonPanel.add(deleteBtn);
+        buttonPanel.add(viewMembersBtn);
+        buttonPanel.add(refreshBtn);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weighty = 0;
-        panel.add(buttonPanel, gbc);
-
-        return panel;
-    }
-
-    private void styleButton(JButton button, Color color) {
-        button.setBackground(color);
-        button.setForeground(Color.WHITE);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setMargin(new java.awt.Insets(5, 10, 5, 10));
+        // Main layout
+        add(formPanel, BorderLayout.NORTH);
+        add(new JScrollPane(subjectTable), BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void loadSubjects() {
         tableModel.setRowCount(0);
-        try {
-            List<Subject> subjects = Query.findAll(Subject.class);
+        List<Subject> subjects = Query.findActiveSubjects();
+        if (subjects != null) {
             for (Subject subject : subjects) {
+                // Đếm số thành viên trong môn này
+                List<com.sportclub.database.models.Regist> registrations = Query
+                        .findRegistrationsBySubject(subject.getSubjId());
+                int memberCount = registrations != null ? registrations.size() : 0;
+
                 Object[] row = {
-                        subject.getId(),
+                        subject.getSubjId(),
                         subject.getName(),
-                        subject.getDescription() != null ? (subject.getDescription().length() > 50
-                                ? subject.getDescription().substring(0, 50) + "..."
-                                : subject.getDescription()) : "",
-                        subject.isDeleted() ? "Đã xóa" : "Hoạt động"
+                        subject.getDesc() != null ? subject.getDesc() : "",
+                        subject.getCoach() != null ? subject.getCoach() : "",
+                        memberCount + " thành viên"
                 };
                 tableModel.addRow(row);
             }
+        }
+
+        // Setup button renderer and editor for "Xem chi tiết" column
+        if (subjectTable.getColumnCount() > 5) {
+            subjectTable.removeColumn(subjectTable.getColumnModel().getColumn(5));
+        }
+    }
+
+    private void viewSubjectMembers() {
+        if (selectedSubjectId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập để xem danh sách thành viên!", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            Subject subject = Query.findSubjectById(selectedSubjectId);
+            if (subject != null) {
+                // Tạo dialog quản lý thành viên cho môn tập
+                SubjectMembersDialog dialog = new SubjectMembersDialog((JFrame) SwingUtilities.getWindowAncestor(this),
+                        subject);
+                dialog.setVisible(true);
+                // Refresh sau khi đóng dialog
+                loadSubjects();
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void loadSelectedSubject() {
         int selectedRow = subjectTable.getSelectedRow();
-        if (selectedRow != -1) {
+        if (selectedRow >= 0) {
             selectedSubjectId = (Integer) tableModel.getValueAt(selectedRow, 0);
-            try {
-                Subject subject = Query.findById(Subject.class, selectedSubjectId);
-                if (subject != null) {
-                    nameField.setText(subject.getName());
-                    descriptionArea.setText(subject.getDescription());
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Lỗi khi tải thông tin: " + e.getMessage());
-            }
-        }
-    }
+            nameField.setText((String) tableModel.getValueAt(selectedRow, 1));
+            descriptionArea.setText((String) tableModel.getValueAt(selectedRow, 2));
+            coachField.setText((String) tableModel.getValueAt(selectedRow, 3));
 
-    private void addSubject(ActionEvent e) {
-        try {
-            if (validateForm()) {
-                Subject subject = Add.addSubject(nameField.getText().trim(), descriptionArea.getText().trim());
-                JOptionPane.showMessageDialog(this, "Thêm môn tập thành công!");
-                clearForm();
-                loadSubjects();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi thêm môn tập: " + ex.getMessage());
+            updateBtn.setEnabled(true);
+            deleteBtn.setEnabled(true);
+            viewMembersBtn.setEnabled(true);
+        } else {
+            clearForm();
         }
-    }
-
-    private void updateSubject(ActionEvent e) {
-        try {
-            if (selectedSubjectId != -1 && validateForm()) {
-                Update.updateSubjectDescription(selectedSubjectId, descriptionArea.getText().trim());
-                JOptionPane.showMessageDialog(this, "Cập nhật môn tập thành công!");
-                clearForm();
-                loadSubjects();
-            } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập để cập nhật!");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage());
-        }
-    }
-
-    private void deleteSubject(ActionEvent e) {
-        try {
-            if (selectedSubjectId != -1) {
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        "Bạn có chắc muốn xóa môn tập này?",
-                        "Xác nhận xóa",
-                        JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    Delete.softDeleteSubject(selectedSubjectId);
-                    JOptionPane.showMessageDialog(this, "Xóa môn tập thành công!");
-                    clearForm();
-                    loadSubjects();
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập để xóa!");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi xóa: " + ex.getMessage());
-        }
-    }
-
-    private boolean validateForm() {
-        if (nameField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên môn tập!");
-            nameField.requestFocus();
-            return false;
-        }
-        return true;
     }
 
     private void clearForm() {
         selectedSubjectId = -1;
         nameField.setText("");
         descriptionArea.setText("");
-        subjectTable.clearSelection();
+        coachField.setText("");
+        updateBtn.setEnabled(false);
+        deleteBtn.setEnabled(false);
+        viewMembersBtn.setEnabled(false);
+    }
+
+    private void addSubject(ActionEvent e) {
+        try {
+            String name = nameField.getText().trim();
+            String description = descriptionArea.getText().trim();
+            String coach = coachField.getText().trim();
+
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên môn tập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (coach.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên huấn luyện viên!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Subject subject = Add.addSubject(name, description, coach);
+
+            if (subject != null) {
+                JOptionPane.showMessageDialog(this, "Thêm môn tập thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadSubjects();
+                clearForm();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updateSubject(ActionEvent e) {
+        if (selectedSubjectId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập để cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            String name = nameField.getText().trim();
+            String description = descriptionArea.getText().trim();
+            String coach = coachField.getText().trim();
+
+            if (name.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên môn tập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (coach.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập tên huấn luyện viên!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn cập nhật môn tập này?",
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                Update.updateSubjectInfo(selectedSubjectId, name, description, coach);
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadSubjects();
+                clearForm();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteSubject(ActionEvent e) {
+        if (selectedSubjectId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập để xóa!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Bạn có chắc chắn muốn xóa môn tập này?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                Delete.softDeleteSubject(selectedSubjectId);
+                JOptionPane.showMessageDialog(this, "Xóa môn tập thành công!", "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE);
+                loadSubjects();
+                clearForm();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Có lỗi xảy ra: " + ex.getMessage(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }

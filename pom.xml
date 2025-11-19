@@ -84,6 +84,12 @@
                             <mainClass>com.sportclub.GuiLauncher</mainClass>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>testdata</id>
+                        <configuration>
+                            <mainClass>com.sportclub.AddTestData</mainClass>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

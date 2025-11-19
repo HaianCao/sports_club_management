@@ -1,71 +1,91 @@
 package com.sportclub.database.models;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.sql.Time;
 
 @Entity
-@Table(name = "Timelines")
+@Table(name = "timelines")
 public class Timeline {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "time_id")
-    private int timeId;
+    @Column(name = "timeline_id")
+    private int timelineId;
 
-    @Column(name = "start")
-    private Timestamp start;
+    @Column(name = "subj_id", nullable = false)
+    private int subjId;
 
-    @Column(name = "end")
-    private Timestamp end;
+    @Column(name = "week_day")
+    private String weekDay; // Monday, Tuesday, etc.
 
-    @Column(name = "subject_id")
-    private int subjectId;
+    // Time format: HH:mm:ss (e.g., 18:00:00 for 6:00 PM)
+    @Column(name = "start_time")
+    private Time startTime;
 
-    @Column(name = "is_deleted")
-    private boolean isDeleted = false;
+    @Column(name = "end_time")
+    private Time endTime;
+
+    @Column(name = "place")
+    private String place;
 
     // Constructors
     public Timeline() {
     }
 
+    public Timeline(int subjId, String weekDay, Time startTime, Time endTime, String place) {
+        this.subjId = subjId;
+        this.weekDay = weekDay;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.place = place;
+    }
+
     // Getters and Setters
-    public int getTimeId() {
-        return timeId;
+    public int getTimelineId() {
+        return timelineId;
     }
 
-    public void setTimeId(int timeId) {
-        this.timeId = timeId;
+    public void setTimelineId(int timelineId) {
+        this.timelineId = timelineId;
     }
 
-    public Timestamp getStart() {
-        return start;
+    public int getSubjId() {
+        return subjId;
     }
 
-    public void setStart(Timestamp start) {
-        this.start = start;
+    public void setSubjId(int subjId) {
+        this.subjId = subjId;
     }
 
-    public Timestamp getEnd() {
-        return end;
+    public String getWeekDay() {
+        return weekDay;
     }
 
-    public void setEnd(Timestamp end) {
-        this.end = end;
+    public void setWeekDay(String weekDay) {
+        this.weekDay = weekDay;
     }
 
-    public int getSubjectId() {
-        return subjectId;
+    public Time getStartTime() {
+        return startTime;
     }
 
-    public void setSubjectId(int subjectId) {
-        this.subjectId = subjectId;
+    public void setStartTime(Time startTime) {
+        this.startTime = startTime;
     }
 
-    public boolean isDeleted() {
-        return isDeleted;
+    public Time getEndTime() {
+        return endTime;
     }
 
-    public void setDeleted(boolean deleted) {
-        this.isDeleted = deleted;
+    public void setEndTime(Time endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
     }
 }

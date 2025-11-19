@@ -1,60 +1,75 @@
 package com.sportclub.database.CRUD;
 
 import com.sportclub.database.models.*;
-import java.sql.Timestamp;
+import java.sql.Date;
+import java.sql.Time;
 
 public class Add {
 
-    public static User addUser(String name, String phone, String account, String passwd, String gender, int role) {
-        User user = new User();
-        user.setName(name);
-        user.setPhone(phone);
-        user.setAccount(account);
-        user.setPasswd(passwd);
-        user.setGender(gender);
-        user.setRole(role);
-        user.setDeleted(false);
-        CRUDManager.save(user);
-        return user;
+    // Member operations
+    public static Member addMember(String name, Date birth, String gender, String phone, String email) {
+        Member member = new Member();
+        member.setName(name);
+        member.setBirth(birth);
+        member.setGender(gender);
+        member.setPhone(phone);
+        member.setEmail(email);
+        CRUDManager.save(member);
+        return member;
     }
 
-    public static Subject addSubject(String name, String description) {
+    // Subject operations
+    public static Subject addSubject(String name, String desc, String coach) {
         Subject subject = new Subject();
         subject.setName(name);
-        subject.setDescription(description);
-        subject.setDeleted(false);
+        subject.setDesc(desc);
+        subject.setCoach(coach);
         CRUDManager.save(subject);
         return subject;
     }
 
-    public static Timeline addTimeline(Timestamp start, Timestamp end) {
+    // Timeline/Schedule operations
+    public static Timeline addTimeline(int subjId, String weekDay, Time startTime, Time endTime, String place) {
         Timeline timeline = new Timeline();
-        timeline.setStart(start);
-        timeline.setEnd(end);
-        timeline.setSubjectId(0); // Default no subject
-        timeline.setDeleted(false);
+        timeline.setSubjId(subjId);
+        timeline.setWeekDay(weekDay);
+        timeline.setStartTime(startTime);
+        timeline.setEndTime(endTime);
+        timeline.setPlace(place);
         CRUDManager.save(timeline);
         return timeline;
     }
 
-    public static Timeline addTimeline(Timestamp start, Timestamp end, int subjectId) {
-        Timeline timeline = new Timeline();
-        timeline.setStart(start);
-        timeline.setEnd(end);
-        timeline.setSubjectId(subjectId);
-        timeline.setDeleted(false);
-        CRUDManager.save(timeline);
-        return timeline;
+    // Registration operations
+    public static Regist addRegistration(int memId, int subjId, Date registDay) {
+        RegistId registId = new RegistId(memId, subjId);
+        Regist regist = new Regist();
+        regist.setId(registId);
+        regist.setRegistDay(registDay);
+        CRUDManager.save(regist);
+        return regist;
     }
 
-    public static Join addJoin(int userId, int timelineId, int subjectId, String manageId) {
-        JoinId joinId = new JoinId(userId, timelineId, subjectId);
-        Join join = new Join();
-        join.setId(joinId);
-        join.setParticipated(0); // Default to not participated
-        join.setIsDeleted(0);
-        join.setManageId(manageId);
-        CRUDManager.save(join);
-        return join;
+    // Attendance operations
+    public static Attendance addAttendance(int memId, int timelineId, Date attendDate) {
+        Attendance attendance = new Attendance();
+        attendance.setMemId(memId);
+        attendance.setTimelineId(timelineId);
+        attendance.setAttendDate(attendDate);
+        attendance.setStatus("Có mặt");
+        attendance.setNotes("");
+        CRUDManager.save(attendance);
+        return attendance;
+    }
+
+    public static Attendance addAttendance(int memId, int timelineId, Date attendDate, String status, String notes) {
+        Attendance attendance = new Attendance();
+        attendance.setMemId(memId);
+        attendance.setTimelineId(timelineId);
+        attendance.setAttendDate(attendDate);
+        attendance.setStatus(status);
+        attendance.setNotes(notes);
+        CRUDManager.save(attendance);
+        return attendance;
     }
 }

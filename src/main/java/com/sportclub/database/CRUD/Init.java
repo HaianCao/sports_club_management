@@ -4,12 +4,13 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import com.sportclub.database.IConfig;
-import com.sportclub.database.models.User;
+import com.sportclub.database.models.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Date;
 
 public class Init {
     private static volatile SessionFactory sessionFactory;
@@ -80,32 +81,33 @@ public class Init {
     }
 
     /**
-     * Creates the root account if it does not exist in the database.
+     * Initialize sample data for the sports club management system
      */
-    public static void initRootAccount() {
+    public static void initSampleData() {
         try {
-            // Query to check if root account already exists
-            User existingRoot = Query.findUserByAccount(IConfig.acc_root);
+            // Create sample members
+            Member member1 = new Member("Nguyen Van A", Date.valueOf("1995-05-15"), "Nam", "0901234567",
+                    "vana@email.com");
+            Member member2 = new Member("Tran Thi B", Date.valueOf("1996-08-20"), "Nữ", "0907654321", "thib@email.com");
+            Member member3 = new Member("Le Van C", Date.valueOf("1994-12-10"), "Nam", "0903456789", "vanc@email.com");
 
-            if (existingRoot == null) {
-                // Root account does not exist, create it
-                System.out.println("Creating root account...");
-                User rootUser = new User();
-                rootUser.setName("Administrator");
-                rootUser.setPhone("0000000000");
-                rootUser.setAccount(IConfig.acc_root);
-                rootUser.setPasswd(IConfig.passwd_root);
-                rootUser.setGender("Unknown");
-                rootUser.setRole(0); // Role 0 = root
-                rootUser.setDeleted(false);
+            CRUDManager.save(member1);
+            CRUDManager.save(member2);
+            CRUDManager.save(member3);
 
-                CRUDManager.save(rootUser);
-                System.out.println("Root account created successfully with account: " + IConfig.acc_root);
-            } else {
-                System.out.println("Root account already exists.");
-            }
+            // Create sample subjects
+            Subject subject1 = new Subject("Bóng đá", "Môn thể thao đồng đội", "HLV Duc");
+            Subject subject2 = new Subject("Bơi lội", "Môn thể thao cá nhân", "HLV Mai");
+            Subject subject3 = new Subject("Cầu lông", "Môn thể thao vợt", "HLV Hải");
+
+            CRUDManager.save(subject1);
+            CRUDManager.save(subject2);
+            CRUDManager.save(subject3);
+
+            System.out.println("Sample data has been created successfully!");
+
         } catch (Exception e) {
-            System.err.println("Error creating root account: " + e.getMessage());
+            System.err.println("Error creating sample data: " + e.getMessage());
             e.printStackTrace();
         }
     }

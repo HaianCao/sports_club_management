@@ -5,359 +5,317 @@ import com.sportclub.database.models.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 
 /**
- * Panel for attendance tracking
+ * Panel for class-based attendance management
  */
 public class AttendancePanel extends JPanel {
 
+    private JComboBox<String> scheduleCombo;
+    private JTextField dateField;
     private JTable attendanceTable;
     private DefaultTableModel tableModel;
-    private JComboBox<String> userCombo, subjectCombo, timelineCombo;
-    private JTextArea commentArea;
-    private JCheckBox participatedCheck;
-    private JTextField manageIdField;
-    private JButton markBtn, updateBtn, refreshBtn, loadBtn;
+    private JButton loadBtn, saveBtn, markAllBtn, unmarkAllBtn, refreshBtn;
+    private int selectedTimelineId = -1;
 
     public AttendancePanel() {
         initializeComponents();
         setupLayout();
-        loadData();
+
+        // Load dữ liệu ban đầu
+        loadSchedules();
+
+        // Hiển thị hướng dẫn nếu không có lịch học
+        SwingUtilities.invokeLater(() -> {
+            if (scheduleCombo.getItemCount() <= 2) { // <= 2 vì có "Chọn lớp học" và có thể có "Không có lịch học nào"
+                JOptionPane.showMessageDialog(this,
+                        "Chưa có lịch học nào được tạo!\n\nVui lòng:\n1. Vào 'Quản lý Môn tập' để tạo môn tập\n2. Vào 'Quản lý Lịch tập' để tạo lịch học\n3. Quay lại đây để điểm danh\n\nHoặc nhấn 'Làm mới lớp học' để tải lại danh sách.",
+                        "Hướng dẫn", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
     }
 
     private void initializeComponents() {
-        // Table setup
-        String[] columns = { "Thành viên", "Môn tập", "Lịch tập", "Tham gia", "Ghi chú", "Người quản lý" };
+        // Controls
+        scheduleCombo = new JComboBox<>();
+        scheduleCombo.addActionListener(e -> {
+            loadSelectedSchedule();
+            loadAttendanceData();
+        });
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        dateField = new JTextField(sdf.format(new java.util.Date()), 10);
+
+        // Table setup - với checkbox column
+        String[] columns = { "Mã TV", "Tên thành viên", "Số điện thoại", "Có mặt", "Ghi chú" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 3) { // "Có mặt" column
+                    return Boolean.class;
+                }
+                return String.class;
+            }
+
+            @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                // Chỉ cho phép edit cột "Có mặt" và "Ghi chú"
+                return column == 3 || column == 4;
             }
         };
-        attendanceTable = new JTable(tableModel);
-        attendanceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Form fields
-        userCombo = new JComboBox<>();
-        subjectCombo = new JComboBox<>();
-        timelineCombo = new JComboBox<>();
-        participatedCheck = new JCheckBox("Đã tham gia");
-        commentArea = new JTextArea(3, 20);
-        commentArea.setLineWrap(true);
-        commentArea.setWrapStyleWord(true);
-        manageIdField = new JTextField("1", 10);
+        attendanceTable = new JTable(tableModel);
+        attendanceTable.setRowHeight(25);
+
+        // Set column widths
+        TableColumn col0 = attendanceTable.getColumnModel().getColumn(0); // Mã TV
+        col0.setPreferredWidth(60);
+        col0.setMaxWidth(60);
+
+        TableColumn col1 = attendanceTable.getColumnModel().getColumn(1); // Tên
+        col1.setPreferredWidth(150);
+
+        TableColumn col2 = attendanceTable.getColumnModel().getColumn(2); // SĐT
+        col2.setPreferredWidth(100);
+
+        TableColumn col3 = attendanceTable.getColumnModel().getColumn(3); // Có mặt
+        col3.setPreferredWidth(60);
+        col3.setMaxWidth(60);
+
+        TableColumn col4 = attendanceTable.getColumnModel().getColumn(4); // Ghi chú
+        col4.setPreferredWidth(120);
 
         // Buttons
-        markBtn = new JButton("Điểm danh");
-        updateBtn = new JButton("Cập nhật");
-        refreshBtn = new JButton("Làm mới");
-        loadBtn = new JButton("Tải dữ liệu");
+        loadBtn = new JButton("Tải danh sách");
+        loadBtn.addActionListener(this::loadAttendanceData);
 
-        // Button styling
-        styleButton(markBtn, new Color(92, 184, 92));
-        styleButton(updateBtn, new Color(240, 173, 78));
-        styleButton(refreshBtn, new Color(91, 192, 222));
-        styleButton(loadBtn, new Color(128, 128, 128));
+        saveBtn = new JButton("Lưu điểm danh");
+        saveBtn.addActionListener(this::saveAttendance);
 
-        // Button actions
-        markBtn.addActionListener(this::markAttendance);
-        updateBtn.addActionListener(this::updateAttendance);
-        refreshBtn.addActionListener(e -> {
-            clearForm();
-            loadAttendanceRecords();
-        });
-        loadBtn.addActionListener(e -> loadData());
+        markAllBtn = new JButton("Chọn tất cả");
+        markAllBtn.addActionListener(this::markAll);
+
+        unmarkAllBtn = new JButton("Bỏ chọn tất cả");
+        unmarkAllBtn.addActionListener(this::unmarkAll);
+
+        refreshBtn = new JButton("Làm mới lớp học");
+        refreshBtn.addActionListener(e -> loadSchedules());
     }
 
     private void setupLayout() {
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
 
-        // Title
-        JLabel titleLabel = new JLabel("ĐIỂM DANH THÀNH VIÊN", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        add(titleLabel, BorderLayout.NORTH);
+        // Top panel - Chọn lớp học và ngày
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.setBorder(BorderFactory.createTitledBorder("Chọn lớp học để điểm danh"));
 
-        // Main content
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setLeftComponent(createTablePanel());
-        splitPane.setRightComponent(createFormPanel());
-        splitPane.setDividerLocation(500);
+        topPanel.add(new JLabel("Lớp học:"));
+        topPanel.add(scheduleCombo);
+        topPanel.add(refreshBtn);
+        topPanel.add(Box.createHorizontalStrut(20));
+        topPanel.add(new JLabel("Ngày (yyyy-mm-dd):"));
+        topPanel.add(dateField);
+        topPanel.add(Box.createHorizontalStrut(20));
+        topPanel.add(loadBtn);
 
-        add(splitPane, BorderLayout.CENTER);
+        // Center panel - Bảng điểm danh
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.setBorder(BorderFactory.createTitledBorder("Danh sách thành viên"));
+        centerPanel.add(new JScrollPane(attendanceTable), BorderLayout.CENTER);
+
+        // Bottom panel - Buttons
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        bottomPanel.add(markAllBtn);
+        bottomPanel.add(unmarkAllBtn);
+        bottomPanel.add(Box.createHorizontalStrut(20));
+        bottomPanel.add(saveBtn);
+
+        // Main layout
+        add(topPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    private JPanel createTablePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Danh sách điểm danh"));
+    private void loadSchedules() {
+        scheduleCombo.removeAllItems();
+        scheduleCombo.addItem("-- Chọn lớp học --");
 
-        JScrollPane scrollPane = new JScrollPane(attendanceTable);
-        scrollPane.setPreferredSize(new Dimension(500, 400));
-
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(refreshBtn);
-        buttonPanel.add(loadBtn);
-
-        panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-
-        return panel;
-    }
-
-    private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createTitledBorder("Điểm danh"));
-        panel.setBackground(Color.WHITE);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        // User
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Thành viên:"), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(userCombo, gbc);
-
-        // Subject
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Môn tập:"), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(subjectCombo, gbc);
-
-        // Timeline
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Lịch tập:"), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(timelineCombo, gbc);
-
-        // Participated
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(participatedCheck, gbc);
-
-        // Comment
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        panel.add(new JLabel("Ghi chú:"), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.3;
-        panel.add(new JScrollPane(commentArea), gbc);
-
-        // Manager ID
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 0;
-        gbc.weighty = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel("ID Quản lý:"), gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(manageIdField, gbc);
-
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(markBtn);
-        buttonPanel.add(updateBtn);
-
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(buttonPanel, gbc);
-
-        return panel;
-    }
-
-    private void styleButton(JButton button, Color color) {
-        button.setBackground(color);
-        button.setForeground(Color.WHITE);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setMargin(new java.awt.Insets(5, 10, 5, 10));
-    }
-
-    private void loadData() {
-        loadUsers();
-        loadSubjects();
-        loadTimelines();
-        loadAttendanceRecords();
-    }
-
-    private void loadUsers() {
-        userCombo.removeAllItems();
         try {
-            List<User> users = Query.findAll(User.class);
-            for (User user : users) {
-                if (!user.isDeleted()) {
-                    userCombo.addItem(user.getId() + " - " + user.getName());
+            List<Timeline> schedules = Query.findActiveSchedules();
+            if (schedules != null && !schedules.isEmpty()) {
+                int count = 0;
+                for (Timeline timeline : schedules) {
+                    Subject subject = Query.findById(Subject.class, timeline.getSubjId());
+                    String subjectName = subject != null ? subject.getName() : "Unknown";
+                    String item = timeline.getTimelineId() + " - " + subjectName +
+                            " (" + timeline.getWeekDay() + " " + timeline.getStartTime() +
+                            " - " + timeline.getEndTime() + " tại " + timeline.getPlace() + ")";
+                    scheduleCombo.addItem(item);
+                    count++;
                 }
+                System.out.println("Loaded " + count + " schedules successfully");
+            } else {
+                scheduleCombo.addItem("-- Không có lịch học nào --");
+                System.out.println("No schedules found in database");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách thành viên: " + e.getMessage());
+            scheduleCombo.addItem("-- Lỗi khi tải dữ liệu --");
+            System.out.println("Error loading schedules: " + e.getMessage());
+            e.printStackTrace();
         }
-    }
 
-    private void loadSubjects() {
-        subjectCombo.removeAllItems();
-        try {
-            List<Subject> subjects = Query.findActiveSubjects();
-            for (Subject subject : subjects) {
-                subjectCombo.addItem(subject.getId() + " - " + subject.getName());
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách môn tập: " + e.getMessage());
-        }
-    }
-
-    private void loadTimelines() {
-        timelineCombo.removeAllItems();
-        try {
-            List<Timeline> timelines = Query.findAll(Timeline.class);
-            for (Timeline timeline : timelines) {
-                if (!timeline.isDeleted() && timeline.getStart() != null && timeline.getEnd() != null) {
-                    String timeInfo = timeline.getTimeId() + " - " +
-                            timeline.getStart().toString().split(" ")[0] + " " +
-                            timeline.getStart().toString().split(" ")[1] + " → " +
-                            timeline.getEnd().toString().split(" ")[1];
-                    timelineCombo.addItem(timeInfo);
-                }
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải danh sách lịch tập: " + e.getMessage());
-        }
-    }
-
-    private void loadAttendanceRecords() {
+        // Reset selection
+        selectedTimelineId = -1;
         tableModel.setRowCount(0);
-        try {
-            List<Join> joins = CRUDManager.getAll(Join.class);
-            for (Join join : joins) {
-                if (join.getIsDeleted() == 0) {
-                    User user = Query.findById(User.class, join.getId().getuId());
-                    Subject subject = Query.findById(Subject.class, join.getId().getSubjectId());
-                    Timeline timeline = Query.findById(Timeline.class, join.getId().gettId());
+    }
 
-                    if (user != null && subject != null && timeline != null) {
-                        Object[] row = {
-                                user.getName(),
-                                subject.getName(),
-                                timeline.getStart() + " → " + timeline.getEnd(),
-                                join.getParticipated() == 1 ? "Có" : "Không",
-                                join.getComment(),
-                                join.getManageId()
-                        };
-                        tableModel.addRow(row);
+    private void loadSelectedSchedule() {
+        String selected = (String) scheduleCombo.getSelectedItem();
+        if (selected != null && !selected.startsWith("--") && selected.contains(" - ")) {
+            try {
+                selectedTimelineId = Integer.parseInt(selected.split(" - ")[0]);
+                System.out.println("Selected timeline ID: " + selectedTimelineId);
+            } catch (NumberFormatException e) {
+                selectedTimelineId = -1;
+                System.out.println("Error parsing timeline ID from: " + selected);
+            }
+        } else {
+            selectedTimelineId = -1;
+            System.out.println("No valid schedule selected: " + selected);
+        }
+    }
+
+    private void loadAttendanceData(ActionEvent e) {
+        // Kiểm tra khi người dùng nhấn nút
+        if (selectedTimelineId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn lớp học!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        loadAttendanceData();
+    }
+
+    private void loadAttendanceData() {
+        tableModel.setRowCount(0);
+
+        if (selectedTimelineId == -1) {
+            // Không hiện thông báo lỗi, chỉ return im lặng
+            return;
+        }
+
+        try {
+            Date attendanceDate = Date.valueOf(dateField.getText().trim());
+
+            // Lấy tất cả thành viên đăng ký lớp này
+            List<Regist> registrations = Query.findRegistrationsBySubject(getSubjectIdFromTimeline());
+            if (registrations == null || registrations.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có thành viên nào đăng ký lớp học này!", "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Lấy dữ liệu điểm danh có sẵn cho ngày này
+            List<Attendance> existingAttendance = Query.findAttendanceByTimelineAndDate(selectedTimelineId,
+                    attendanceDate);
+
+            for (Regist regist : registrations) {
+                Member member = Query.findById(Member.class, regist.getMemId());
+                if (member != null) {
+                    // Kiểm tra xem thành viên này đã được điểm danh chưa
+                    boolean isPresent = false;
+                    String notes = "";
+
+                    for (Attendance att : existingAttendance) {
+                        if (att.getMemId() == member.getMemId()) {
+                            isPresent = "Có mặt".equals(att.getStatus());
+                            notes = att.getNotes() != null ? att.getNotes() : "";
+                            break;
+                        }
                     }
+
+                    Object[] row = {
+                            member.getMemId(),
+                            member.getName(),
+                            member.getPhone(),
+                            isPresent, // Boolean checkbox
+                            notes
+                    };
+                    tableModel.addRow(row);
                 }
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu điểm danh: " + e.getMessage());
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ! Vui lòng nhập yyyy-mm-dd", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void markAttendance(ActionEvent e) {
-        try {
-            if (validateForm()) {
-                int userId = extractId((String) userCombo.getSelectedItem());
-                int subjectId = extractId((String) subjectCombo.getSelectedItem());
-                int timelineId = extractId((String) timelineCombo.getSelectedItem());
-
-                Join join = Add.addJoin(userId, timelineId, subjectId, manageIdField.getText());
-
-                if (participatedCheck.isSelected() || !commentArea.getText().trim().isEmpty()) {
-                    Update.updateJoinParticipation(userId, timelineId, subjectId,
-                            participatedCheck.isSelected() ? 1 : 0,
-                            commentArea.getText().trim(),
-                            manageIdField.getText());
-                }
-
-                JOptionPane.showMessageDialog(this, "Điểm danh thành công!");
-                clearForm();
-                loadAttendanceRecords();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi điểm danh: " + ex.getMessage());
-        }
-    }
-
-    private void updateAttendance(ActionEvent e) {
-        try {
-            if (validateForm()) {
-                int userId = extractId((String) userCombo.getSelectedItem());
-                int subjectId = extractId((String) subjectCombo.getSelectedItem());
-                int timelineId = extractId((String) timelineCombo.getSelectedItem());
-
-                Update.updateJoinParticipation(userId, timelineId, subjectId,
-                        participatedCheck.isSelected() ? 1 : 0,
-                        commentArea.getText().trim(),
-                        manageIdField.getText());
-
-                JOptionPane.showMessageDialog(this, "Cập nhật điểm danh thành công!");
-                clearForm();
-                loadAttendanceRecords();
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage());
-        }
-    }
-
-    private boolean validateForm() {
-        if (userCombo.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn thành viên!");
-            return false;
-        }
-        if (subjectCombo.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn môn tập!");
-            return false;
-        }
-        if (timelineCombo.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch tập!");
-            return false;
-        }
-        if (manageIdField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập ID quản lý!");
-            return false;
-        }
-        return true;
-    }
-
-    private void clearForm() {
-        userCombo.setSelectedIndex(-1);
-        subjectCombo.setSelectedIndex(-1);
-        timelineCombo.setSelectedIndex(-1);
-        participatedCheck.setSelected(false);
-        commentArea.setText("");
-        manageIdField.setText("1");
-        attendanceTable.clearSelection();
-    }
-
-    private int extractId(String comboItem) {
-        if (comboItem == null)
+    private int getSubjectIdFromTimeline() {
+        if (selectedTimelineId == -1)
             return -1;
-        return Integer.parseInt(comboItem.split(" - ")[0]);
+        Timeline timeline = Query.findById(Timeline.class, selectedTimelineId);
+        return timeline != null ? timeline.getSubjId() : -1;
+    }
+
+    private void saveAttendance(ActionEvent e) {
+        if (selectedTimelineId == -1) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn lớp học!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            Date attendanceDate = Date.valueOf(dateField.getText().trim());
+
+            // Xóa tất cả điểm danh cũ cho lớp này trong ngày
+            List<Attendance> existingAttendance = Query.findAttendanceByTimelineAndDate(selectedTimelineId,
+                    attendanceDate);
+            for (Attendance att : existingAttendance) {
+                Delete.deleteAttendance(att.getAttendId());
+            }
+
+            // Lưu điểm danh mới
+            int savedCount = 0;
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                int memId = (Integer) tableModel.getValueAt(i, 0);
+                Boolean isPresent = (Boolean) tableModel.getValueAt(i, 3);
+                String notes = tableModel.getValueAt(i, 4).toString();
+
+                if (isPresent != null && isPresent) {
+                    Add.addAttendance(memId, selectedTimelineId, attendanceDate, "Có mặt", notes);
+                    savedCount++;
+                } else {
+                    Add.addAttendance(memId, selectedTimelineId, attendanceDate, "Vắng mặt", notes);
+                }
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    "Đã lưu điểm danh thành công!\n" +
+                            "Có mặt: " + savedCount + "/" + tableModel.getRowCount() + " thành viên",
+                    "Thành công", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, "Định dạng ngày không hợp lệ! Vui lòng nhập yyyy-mm-dd", "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Có lỗi xảy ra khi lưu: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void markAll(ActionEvent e) {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            tableModel.setValueAt(true, i, 3);
+        }
+    }
+
+    private void unmarkAll(ActionEvent e) {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            tableModel.setValueAt(false, i, 3);
+        }
     }
 }

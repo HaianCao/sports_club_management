@@ -65,37 +65,37 @@ public class MainWindow extends JFrame {
         menuBar.setBackground(new Color(51, 122, 183));
 
         // Home button
-        JButton homeBtn = createMenuButton("🏠 Trang Chủ", "HOME");
+        JButton homeBtn = createMenuButton("Trang Chủ", "HOME");
         menuBar.add(homeBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
         // Members button
-        JButton membersBtn = createMenuButton("👥 Thành Viên", "MEMBERS");
+        JButton membersBtn = createMenuButton("Thành Viên", "MEMBERS");
         menuBar.add(membersBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
         // Subjects button
-        JButton subjectsBtn = createMenuButton("🏃 Môn Tập", "SUBJECTS");
+        JButton subjectsBtn = createMenuButton("Môn Tập", "SUBJECTS");
         menuBar.add(subjectsBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
         // Schedule button
-        JButton scheduleBtn = createMenuButton("📅 Lịch Tập", "SCHEDULE");
+        JButton scheduleBtn = createMenuButton("Lịch Tập", "SCHEDULE");
         menuBar.add(scheduleBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
         // Attendance button
-        JButton attendanceBtn = createMenuButton("✓ Điểm Danh", "ATTENDANCE");
+        JButton attendanceBtn = createMenuButton("Điểm Danh", "ATTENDANCE");
         menuBar.add(attendanceBtn);
 
         menuBar.add(Box.createHorizontalStrut(10));
 
         // Reports button
-        JButton reportsBtn = createMenuButton("📄 In File", "REPORTS");
+        JButton reportsBtn = createMenuButton("In File", "REPORTS");
         menuBar.add(reportsBtn);
 
         // Add glue to push everything to the left
@@ -139,21 +139,35 @@ public class MainWindow extends JFrame {
         titleLabel.setForeground(new Color(51, 122, 183));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(50, 20, 30, 20));
 
-        // Welcome message
-        JPanel welcomePanel = new JPanel(new GridLayout(3, 2, 20, 20));
+        // Welcome message - sử dụng layout tùy chỉnh để căn giữa
+        JPanel welcomePanel = new JPanel(new BorderLayout());
         welcomePanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 50, 50));
         welcomePanel.setBackground(Color.WHITE);
 
-        // Quick access buttons
-        welcomePanel
+        // Panel chứa 4 nút chính (2x2)
+        JPanel mainButtonsPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        mainButtonsPanel.setBackground(Color.WHITE);
+
+        // Quick access buttons - 4 nút chính
+        mainButtonsPanel
                 .add(createQuickAccessButton("Quản lý Thành viên", "Xem và quản lý thông tin thành viên", "MEMBERS"));
-        welcomePanel.add(createQuickAccessButton("Quản lý Môn tập", "Thêm, sửa, xóa các môn thể thao", "SUBJECTS"));
-        welcomePanel
+        mainButtonsPanel.add(createQuickAccessButton("Quản lý Môn tập", "Thêm, sửa, xóa các môn thể thao", "SUBJECTS"));
+        mainButtonsPanel
                 .add(createQuickAccessButton("Quản lý Lịch tập", "Tạo và quản lý lịch trình tập luyện", "SCHEDULE"));
-        welcomePanel.add(createQuickAccessButton("Điểm danh", "Ghi nhận sự tham gia của thành viên", "ATTENDANCE"));
-        welcomePanel.add(createQuickAccessButton("In file", "Xuất báo cáo và in tài liệu", "REPORTS"));
-        // Empty panel to maintain grid layout
-        welcomePanel.add(new JPanel());
+        mainButtonsPanel.add(createQuickAccessButton("Điểm danh", "Ghi nhận sự tham gia của thành viên", "ATTENDANCE"));
+
+        // Panel để căn giữa nút In file
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        // Nút In file đặt riêng ở giữa với kích thước lớn hơn
+        JPanel reportButtonPanel = createQuickAccessButton("In file", "Xuất báo cáo và in tài liệu", "REPORTS");
+        reportButtonPanel.setPreferredSize(new Dimension(300, 80));
+        centerPanel.add(reportButtonPanel);
+
+        welcomePanel.add(mainButtonsPanel, BorderLayout.CENTER);
+        welcomePanel.add(centerPanel, BorderLayout.SOUTH);
 
         homePanel.add(titleLabel, BorderLayout.NORTH);
         homePanel.add(welcomePanel, BorderLayout.CENTER);

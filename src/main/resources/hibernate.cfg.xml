@@ -19,10 +19,11 @@
         <property name="hibernate.hbm2ddl.auto">create</property>
 
         <!-- Mention annotated class -->
-        <mapping class="com.sportclub.database.models.User"/>
+        <mapping class="com.sportclub.database.models.Member"/>
         <mapping class="com.sportclub.database.models.Subject"/>
         <mapping class="com.sportclub.database.models.Timeline"/>
-        <mapping class="com.sportclub.database.models.Join"/>
+        <mapping class="com.sportclub.database.models.Regist"/>
+        <mapping class="com.sportclub.database.models.Attendance"/>
 
     </session-factory>
 </hibernate-configuration>

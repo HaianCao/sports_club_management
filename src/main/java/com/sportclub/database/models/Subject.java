@@ -3,34 +3,40 @@ package com.sportclub.database.models;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "Subjects")
+@Table(name = "subjects")
 public class Subject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private int id;
+    @Column(name = "subj_id")
+    private int subjId;
 
     @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "description")
-    private String description;
+    private String desc;
 
-    @Column(name = "is_deleted")
-    private boolean isDeleted = false;
+    @Column(name = "coach")
+    private String coach;
 
     // Constructors
     public Subject() {
     }
 
-    // Getters and Setters
-    public int getId() {
-        return id;
+    public Subject(String name, String desc, String coach) {
+        this.name = name;
+        this.desc = desc;
+        this.coach = coach;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    // Getters and Setters
+    public int getSubjId() {
+        return subjId;
+    }
+
+    public void setSubjId(int subjId) {
+        this.subjId = subjId;
     }
 
     public String getName() {
@@ -41,20 +47,19 @@ public class Subject {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getDesc() {
+        return desc;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setDesc(String desc) {
+        this.desc = desc;
     }
 
-    public boolean isDeleted() {
-        return isDeleted;
+    public String getCoach() {
+        return coach;
     }
 
-    public void setDeleted(boolean deleted) {
-        this.isDeleted = deleted;
+    public void setCoach(String coach) {
+        this.coach = coach;
     }
 }
-

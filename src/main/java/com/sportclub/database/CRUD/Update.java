@@ -1,46 +1,66 @@
 package com.sportclub.database.CRUD;
 
-import com.sportclub.database.models.Join;
-import com.sportclub.database.models.JoinId;
-import com.sportclub.database.models.Subject;
-import com.sportclub.database.models.User;
+import com.sportclub.database.models.*;
+import java.sql.Date;
+import java.sql.Time;
 
 public class Update {
 
-    public static void updateUser(int userId, String newName, String newPhone) {
-        User user = Query.findById(User.class, userId);
-        if (user != null) {
-            user.setName(newName);
-            user.setPhone(newPhone);
-            CRUDManager.update(user);
-            System.out.println("User with ID " + userId + " updated.");
+    // Member updates
+    public static void updateMember(int memId, String newName, String newPhone, String newEmail) {
+        Member member = Query.findById(Member.class, memId);
+        if (member != null) {
+            member.setName(newName);
+            member.setPhone(newPhone);
+            member.setEmail(newEmail);
+            CRUDManager.update(member);
+            System.out.println("Member with ID " + memId + " updated.");
         } else {
-            System.out.println("User with ID " + userId + " not found.");
+            System.out.println("Member with ID " + memId + " not found.");
         }
     }
 
-    public static void updateSubjectDescription(int subjectId, String newDescription) {
-        Subject subject = Query.findById(Subject.class, subjectId);
+    // Subject updates
+    public static void updateSubjectInfo(int subjId, String newName, String newDesc, String newCoach) {
+        Subject subject = Query.findById(Subject.class, subjId);
         if (subject != null) {
-            subject.setDescription(newDescription);
+            subject.setName(newName);
+            subject.setDesc(newDesc);
+            subject.setCoach(newCoach);
             CRUDManager.update(subject);
-            System.out.println("Subject with ID " + subjectId + " updated.");
+            System.out.println("Subject with ID " + subjId + " updated.");
         } else {
-            System.out.println("Subject with ID " + subjectId + " not found.");
+            System.out.println("Subject with ID " + subjId + " not found.");
         }
     }
 
-    public static void updateJoinParticipation(int userId, int timelineId, int subjectId, int participation, String comment, String manageId) {
-        JoinId joinId = new JoinId(userId, timelineId, subjectId);
-        Join join = CRUDManager.get(Join.class, joinId);
-        if (join != null) {
-            join.setParticipated(participation);
-            join.setComment(comment);
-            join.setManageId(manageId);
-            CRUDManager.update(join);
-            System.out.println("Join for user " + userId + " updated.");
+    // Timeline updates
+    public static void updateTimeline(int timelineId, String newWeekDay, Time newStartTime, Time newEndTime,
+            String newPlace) {
+        Timeline timeline = Query.findById(Timeline.class, timelineId);
+        if (timeline != null) {
+            timeline.setWeekDay(newWeekDay);
+            timeline.setStartTime(newStartTime);
+            timeline.setEndTime(newEndTime);
+            timeline.setPlace(newPlace);
+            CRUDManager.update(timeline);
+            System.out.println("Timeline with ID " + timelineId + " updated.");
         } else {
-            System.out.println("Join for user " + userId + " not found.");
+            System.out.println("Timeline with ID " + timelineId + " not found.");
+        }
+    }
+
+    // Attendance updates
+    public static void updateAttendance(int attendId, Date attendDate, String status, String notes) {
+        Attendance attendance = Query.findById(Attendance.class, attendId);
+        if (attendance != null) {
+            attendance.setAttendDate(attendDate);
+            attendance.setStatus(status);
+            attendance.setNotes(notes);
+            CRUDManager.update(attendance);
+            System.out.println("Attendance with ID " + attendId + " updated.");
+        } else {
+            System.out.println("Attendance with ID " + attendId + " not found.");
         }
     }
 }
